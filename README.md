@@ -1,0 +1,2 @@
+# gamibot
+gamibot for linebot
