@@ -1,7 +1,6 @@
 <?php
 $accessToken = getenv('LINE_CHANNEL_ACCESS_TOKEN');
 
-
 //ユーザーからのメッセージ取得
 $json_string = file_get_contents('php://input');
 $jsonObj = json_decode($json_string);
@@ -12,145 +11,97 @@ $text = $jsonObj->{"events"}[0]->{"message"}->{"text"};
 //ReplyToken取得
 $replyToken = $jsonObj->{"events"}[0]->{"replyToken"};
 
-//メッセージ以外のときは何も返さず終了
+$userId = $jsonObj->{"events"}[0]->{"source"}->{"userId"};
+
+
+////////////////// include /////////////////////
+include 'Charge.php';
+include 'ChargeList.php';
+include 'User.php';
+include 'UserList.php';
+
+////////////////// Util /////////////////////
+function illegalArgumentResponse() {
+	return [
+		"type" => "text",
+		"text" => "入力が正しくありません。"
+	];
+}
+
+function alreadyJoinedResponse() {
+	$users = new UserList();
+	return [
+		"type" => "text",
+		"text" => "すでに参加しているユーザーです。\n現在の参加者は、\n" . $users->display()
+	];
+}
+
+function isAlreadyJoinUser($newUserId) {
+	$users = new UserList();
+	$existUserIds = $users->getIdArray();
+	return in_array($newUserId, $existUserIds);
+}
+
+function startWith($str, $prefix) {
+	return substr($str,  0, strlen($prefix)) === $prefix;
+}
+
+////////////////// Main /////////////////////
+メッセージ以外のときは何も返さず終了
 if($type != "text"){
 	exit;
 }
 
+// $text = "bot join unknown3";  //TODO for test. plz delete
+// $userId = "ddd";  //TODO for test. plz delete
+
 //返信データ作成
-if ($text == 'はい') {
-  $response_format_text = [
-    "type" => "template",
-    "altText" => "こちらの〇〇はいかがですか？",
-    "template" => [
-      "type" => "buttons",
-      "thumbnailImageUrl" => "https://" . $_SERVER['SERVER_NAME'] . "/img1.jpg",
-      "title" => "○○レストラン",
-      "text" => "お探しのレストランはこれですね",
-      "actions" => [
-          [
-            "type" => "postback",
-            "label" => "予約する",
-            "data" => "action=buy&itemid=123"
-          ],
-          [
-            "type" => "postback",
-            "label" => "電話する",
-            "data" => "action=pcall&itemid=123"
-          ],
-          [
-            "type" => "uri",
-            "label" => "詳しく見る",
-            "uri" => "https://" . $_SERVER['SERVER_NAME'] . "/"
-          ],
-          [
-            "type" => "message",
-            "label" => "違うやつ",
-            "text" => "違うやつお願い"
-          ]
-      ]
-    ]
+if ($text == 'bot') {
+	$response_format_text = [
+		"type" => "text",
+    "text" => '追加方法: bot add <支払い金額(数字のみ)> <支払者(人名 or "全員")>'
   ];
-} else if ($text == 'いいえ') {
-  exit;
-} else if ($text == '違うやつお願い') {
-  $response_format_text = [
-    "type" => "template",
-    "altText" => "候補を３つご案内しています。",
-    "template" => [
-      "type" => "carousel",
-      "columns" => [
-          [
-            "thumbnailImageUrl" => "https://" . $_SERVER['SERVER_NAME'] . "/img2-1.jpg",
-            "title" => "●●レストラン",
-            "text" => "こちらにしますか？",
-            "actions" => [
-              [
-                  "type" => "postback",
-                  "label" => "予約する",
-                  "data" => "action=rsv&itemid=111"
-              ],
-              [
-                  "type" => "postback",
-                  "label" => "電話する",
-                  "data" => "action=pcall&itemid=111"
-              ],
-              [
-                  "type" => "uri",
-                  "label" => "詳しく見る（ブラウザ起動）",
-                  "uri" => "https://" . $_SERVER['SERVER_NAME'] . "/"
-              ]
-            ]
-          ],
-          [
-            "thumbnailImageUrl" => "https://" . $_SERVER['SERVER_NAME'] . "/img2-2.jpg",
-            "title" => "▲▲レストラン",
-            "text" => "それともこちら？（２つ目）",
-            "actions" => [
-              [
-                  "type" => "postback",
-                  "label" => "予約する",
-                  "data" => "action=rsv&itemid=222"
-              ],
-              [
-                  "type" => "postback",
-                  "label" => "電話する",
-                  "data" => "action=pcall&itemid=222"
-              ],
-              [
-                  "type" => "uri",
-                  "label" => "詳しく見る（ブラウザ起動）",
-                  "uri" => "https://" . $_SERVER['SERVER_NAME'] . "/"
-              ]
-            ]
-          ],
-          [
-            "thumbnailImageUrl" => "https://" . $_SERVER['SERVER_NAME'] . "/img2-3.jpg",
-            "title" => "■■レストラン",
-            "text" => "はたまたこちら？（３つ目）",
-            "actions" => [
-              [
-                  "type" => "postback",
-                  "label" => "予約する",
-                  "data" => "action=rsv&itemid=333"
-              ],
-              [
-                  "type" => "postback",
-                  "label" => "電話する",
-                  "data" => "action=pcall&itemid=333"
-              ],
-              [
-                  "type" => "uri",
-                  "label" => "詳しく見る（ブラウザ起動）",
-                  "uri" => "https://" . $_SERVER['SERVER_NAME'] . "/"
-              ]
-            ]
-          ]
-      ]
-    ]
-  ];
-} else {
-  $response_format_text = [
-    "type" => "template",
-    "altText" => "こんにちわ 何かご用ですか？（はい／いいえ）",
-    "template" => [
-        "type" => "confirm",
-        "text" => "こんにちわ 何かご用ですか？",
-        "actions" => [
-            [
-              "type" => "message",
-              "label" => "はい",
-              "text" => "はい"
-            ],
-            [
-              "type" => "message",
-              "label" => "いいえ",
-              "text" => "いいえ"
-            ]
-        ]
-    ]
-  ];
+
+} else if (startWith($text, 'bot add')) {
+	$req = explode(" ", $text);
+	if (count($req) != 4) {
+		$response_format_text = illegalArgumentResponse();
+	} else {
+		$charges = new ChargeList();
+		$newCharge = new Charge($charges->getNextId(), $userId, $req[2], $req[3]);
+		$newCharge->addDb();
+		$response_format_text = [
+			"type" => "text",
+	    "text" => $newCharge->display()
+	  ];
+	}
+
+} else if ($text == 'bot list') {
+	$charges = new ChargeList();
+	$response_format_text = [
+		"type" => "text",
+		"text" => $charges->display()
+	];
+
+} else if (startWith($text, 'bot join')) {
+	$req = explode(" ", $text);
+	if (count($req) != 3) {
+		$response_format_text = illegalArgumentResponse();
+	} else if (isAlreadyJoinUser($userId)) {
+		$response_format_text = alreadyJoinedResponse();
+	} else {
+		$newUser = new User($userId, $req[2]);
+		$newUser->addDb();
+		$users = new UserList();
+		$response_format_text = [
+			"type" => "text",
+	    "text" => $newUser->name . "が参加しました。\n現在の参加者は、\n" . $users->display()
+	  ];
+	}
 }
+
+echo $response_format_text["text"]; //TODO for test. plz delete
+
 
 $post_data = [
 	"replyToken" => $replyToken,
