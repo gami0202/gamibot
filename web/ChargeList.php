@@ -35,7 +35,7 @@ class ChargeList
   	$id = '';	$owner = '';	$charge = '';	$target = '';
   	$count = 1;
   	foreach ($dbElements as $dbElement) {
-  		switch ($count % 4) {
+  		switch ($count % 5) {
   			case 1:
   				$id = $dbElement;
   				break;
@@ -45,9 +45,12 @@ class ChargeList
   			case 3:
   				$charge = $dbElement;
   				break;
+        case 4:
+          $comment = $dbElement;
+          break;
   			case 0:
   				$target = $dbElement;
-  				array_push($charges, new Charge($id, $owner, $charge, $target));
+  				array_push($charges, new Charge($id, $owner, $charge, $target, $comment));
   				break;
   		}
   		$count++;

@@ -108,11 +108,11 @@ if ($text == 'bot') {
 	$response_format_text = [
 		"type" => "text",
     "text" => "[Help]\n"
-							. "ユーザーとして参加: bot join <人名>\n"
-							. "参加ユーザー一覧: bot user list\n"
-							. "支払追加: bot add <支払い金額(数字のみ)> <支払者(人名 or 'all')>\n"
-							. "支払一覧: bot list\n"
-							. "支払清算: bot calc"
+							. "〇ユーザーとして参加:\n  bot join <人名>\n"
+							. "〇参加者一覧:\n  bot user list\n"
+							. "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
+							. "〇支払一覧:\n  bot list\n"
+							. "〇支払清算:\n  bot calc"
   ];
 
 // 料金追加処理
@@ -120,7 +120,7 @@ if ($text == 'bot') {
 	$req = explode(" ", $text);
 	if (!isAlreadyJoinUser($userId)) {
 		$response_format_text = notJoinedUserResponse();
-	} else if (count($req) != 4) {
+	} else if (count($req) != 5) {
 		$response_format_text = illegalArgumentResponse();
 	} else if (!is_numeric($req[2])) {
 		$response_format_text = illegalArgumentResponse();
@@ -128,7 +128,7 @@ if ($text == 'bot') {
 		$response_format_text = notExistUserNameResponse($req[3]);
 	} else {
 		$charges = new ChargeList();
-		$newCharge = new Charge($charges->getNextId(), getUserNameById($userId), $req[2], $req[3]);
+		$newCharge = new Charge($charges->getNextId(), getUserNameById($userId), $req[2], $req[3], $req[4]);
 		$newCharge->addDb();
 		$response_format_text = [
 			"type" => "text",
