@@ -1,18 +1,26 @@
 <?php
-// $accessToken = getenv('LINE_CHANNEL_ACCESS_TOKEN');
-//
-// //ユーザーからのメッセージ取得
-// $json_string = file_get_contents('php://input');
-// $jsonObj = json_decode($json_string);
-//
-// $type = $jsonObj->{"events"}[0]->{"message"}->{"type"};
-// //メッセージ取得
-// $text = $jsonObj->{"events"}[0]->{"message"}->{"text"};
-// //ReplyToken取得
-// $replyToken = $jsonObj->{"events"}[0]->{"replyToken"};
-//
-// $userId = $jsonObj->{"events"}[0]->{"source"}->{"userId"};
 
+$testMode = false;
+
+if ($testMode) {
+	$text = "bot calc";  //TODO for test. plz delete
+	$userId = "bbb";  //TODO for test. plz delete
+
+} else {
+	$accessToken = getenv('LINE_CHANNEL_ACCESS_TOKEN');
+
+	//ユーザーからのメッセージ取得
+	$json_string = file_get_contents('php://input');
+	$jsonObj = json_decode($json_string);
+
+	$type = $jsonObj->{"events"}[0]->{"message"}->{"type"};
+	//メッセージ取得
+	$text = $jsonObj->{"events"}[0]->{"message"}->{"text"};
+	//ReplyToken取得
+	$replyToken = $jsonObj->{"events"}[0]->{"replyToken"};
+
+	$userId = $jsonObj->{"events"}[0]->{"source"}->{"userId"};
+}
 
 ////////////////// include /////////////////////
 include 'Charge.php';
@@ -79,14 +87,21 @@ function startWith($str, $prefix) {
 	return substr($str,  0, strlen($prefix)) === $prefix;
 }
 
-////////////////// Main /////////////////////
-//メッセージ以外のときは何も返さず終了
-// if($type != "text"){
-// 	exit;
-// }
+function mapToString($map) {
+	$string = "";
+	foreach ($map as $key => $value) {
+		$string = $string . $key . ": " . $value . "\n";
+	}
+	return $string;
+}
 
-$text = "bot add 1000 all";  //TODO for test. plz delete
-$userId = "bbb";  //TODO for test. plz delete
+////////////////// Main /////////////////////
+if (!$testMode) {
+	//メッセージ以外のときは何も返さず終了
+	if($type != "text"){
+		exit;
+	}
+}
 
 // help表示
 if ($text == 'bot') {
@@ -165,13 +180,12 @@ if ($text == 'bot') {
 
 	$response_format_text = [
 		"type" => "text",
-		"text" => var_dump($calcCharge)
+		"text" => mapToString($calcCharge)
 	];
 
 // 支払い削除処理
 } else if (startWith($text, 'bot delete')) {
 	//TODO
-}
 
 // ユーザー追加処理
 } else if (startWith($text, 'bot join')) {
@@ -203,22 +217,23 @@ if ($text == 'bot') {
 	//TODO
 }
 
-echo $response_format_text["text"]; //TODO for test. plz delete
+if ($testMode) {
+	echo $response_format_text["text"]; //TODO for test. plz delete
+} else {
+	$post_data = [
+		"replyToken" => $replyToken,
+		"messages" => [$response_format_text]
+		];
 
-
-// $post_data = [
-// 	"replyToken" => $replyToken,
-// 	"messages" => [$response_format_text]
-// 	];
-//
-// $ch = curl_init("https://api.line.me/v2/bot/message/reply");
-// curl_setopt($ch, CURLOPT_POST, true);
-// curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-// curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-// curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
-// curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-//     'Content-Type: application/json; charser=UTF-8',
-//     'Authorization: Bearer ' . $accessToken
-//     ));
-// $result = curl_exec($ch);
-// curl_close($ch);
+	$ch = curl_init("https://api.line.me/v2/bot/message/reply");
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+	    'Content-Type: application/json; charser=UTF-8',
+	    'Authorization: Bearer ' . $accessToken
+	    ));
+	$result = curl_exec($ch);
+	curl_close($ch);
+}
