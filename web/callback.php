@@ -168,6 +168,11 @@ if ($text == 'bot') {
 		"text" => var_dump($calcCharge)
 	];
 
+// 支払い削除処理
+} else if (startWith($text, 'bot delete')) {
+	//TODO
+}
+
 // ユーザー追加処理
 } else if (startWith($text, 'bot join')) {
 	$req = explode(" ", $text);
@@ -192,6 +197,10 @@ if ($text == 'bot') {
 		"type" => "text",
 		"text" => "現在の参加者は、\n" . $users->display()
 	];
+
+// ユーザー削除処理
+} else if (startWith($text, 'bot user delete')) {
+	//TODO
 }
 
 echo $response_format_text["text"]; //TODO for test. plz delete
