@@ -3,8 +3,8 @@
 $testMode = false;
 
 if ($testMode) {
-	$text = "bot calc";  //TODO for test. plz delete
-	$userId = "bbb";  //TODO for test. plz delete
+	$text = "bot";  //TODO for test. plz delete
+	$userId = "aaa";  //TODO for test. plz delete
 
 } else {
 	$accessToken = getenv('LINE_CHANNEL_ACCESS_TOKEN');
@@ -32,7 +32,7 @@ include 'UserList.php';
 function illegalArgumentResponse() {
 	return [
 		"type" => "text",
-		"text" => "入力が正しくありません。"
+		"text" => "入力が正しくありません。\n'bot'でヘルプが確認できます。"
 	];
 }
 
@@ -44,11 +44,11 @@ function alreadyJoinedResponse() {
 	];
 }
 
-function notExistUserNameResponse() {
+function notExistUserNameResponse($userName) {
 	$users = new UserList();
 	return [
 		"type" => "text",
-		"text" => "指定されたユーザーが存在しません。\n現在の参加者は、\n" . $users->display()
+		"text" => "指定されたユーザー " . $userName . " が存在しません。\n現在の参加者は、\n" . $users->display()
 	];
 }
 
@@ -108,11 +108,11 @@ if ($text == 'bot') {
 	$response_format_text = [
 		"type" => "text",
     "text" => "[Help]\n"
-							. "ユーザーとして参加: bot user join <人名>\n"
+							. "ユーザーとして参加: bot join <人名>\n"
 							. "参加ユーザー一覧: bot user list\n"
 							. "支払追加: bot add <支払い金額(数字のみ)> <支払者(人名 or 'all')>\n"
 							. "支払一覧: bot list\n"
-							. "支払清算: bot calc\n"
+							. "支払清算: bot calc"
   ];
 
 // 料金追加処理
@@ -120,8 +120,10 @@ if ($text == 'bot') {
 	$req = explode(" ", $text);
 	if (count($req) != 4) {
 		$response_format_text = illegalArgumentResponse();
+	} else if (!is_numeric($req[2])) {
+		$response_format_text = illegalArgumentResponse();
 	} else if ($req[3] != 'all' && !isExistUserName($req[3])) {
-		$response_format_text = notExistUserNameResponse();
+		$response_format_text = notExistUserNameResponse($req[3]);
 	} else if (!isAlreadyJoinUser($userId)) {
 		$response_format_text = notJoinedUserResponse();
 	} else {
@@ -215,6 +217,15 @@ if ($text == 'bot') {
 // ユーザー削除処理
 } else if (startWith($text, 'bot user delete')) {
 	//TODO
+
+} else if ($text == 'bot clear') {
+	$date = date("Y-m-d-H-i-s");
+	rename("users.txt", $date . "_users.txt");
+	rename("charges.txt", $date . "_charges.txt");
+	$response_format_text = [
+		"type" => "text",
+		"text" => "記録された情報をすべて削除しました。"
+	];
 }
 
 if ($testMode) {
