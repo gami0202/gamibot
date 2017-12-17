@@ -118,14 +118,14 @@ if ($text == 'bot') {
 // 料金追加処理
 } else if (startWith($text, 'bot add')) {
 	$req = explode(" ", $text);
-	if (count($req) != 4) {
+	if (!isAlreadyJoinUser($userId)) {
+		$response_format_text = notJoinedUserResponse();
+	} else if (count($req) != 4) {
 		$response_format_text = illegalArgumentResponse();
 	} else if (!is_numeric($req[2])) {
 		$response_format_text = illegalArgumentResponse();
 	} else if ($req[3] != 'all' && !isExistUserName($req[3])) {
 		$response_format_text = notExistUserNameResponse($req[3]);
-	} else if (!isAlreadyJoinUser($userId)) {
-		$response_format_text = notJoinedUserResponse();
 	} else {
 		$charges = new ChargeList();
 		$newCharge = new Charge($charges->getNextId(), getUserNameById($userId), $req[2], $req[3]);
