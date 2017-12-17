@@ -10,6 +10,11 @@ class UserList{
     $this->userList = $this->parce($dbElements);
   }
 
+  // ユーザー数を返却
+  function userNum() {
+    return count($this->userList);
+  }
+
   // line表示用文字列に変換
   function display() {
   	$str = "";
@@ -26,6 +31,23 @@ class UserList{
       array_push($userIds, $user->id);
     }
     return $userIds;
+  }
+
+  function getNameArray() {
+    $userNames = array();
+    foreach ($this->userList as $user) {
+      array_push($userNames, $user->name);
+    }
+    return $userNames;
+  }
+
+  function getName($userId) {
+    foreach ($this->userList as $user) {
+      if ($user->id == $userId) {
+        return $user->name;
+      }
+    }
+    return null;
   }
 
   // csvをUserクラスにごり押しパース
