@@ -32,7 +32,7 @@ class ChargeList
   private function parce($dbElements) {
   	$charges = array();
 
-  	$id = '';	$owner = '';	$charge = '';	$target = '';
+  	$id = '';	$owner = '';	$charge = '';	$target = ''; $comment = '';
   	$count = 1;
   	foreach ($dbElements as $dbElement) {
   		switch ($count % 5) {
@@ -46,10 +46,10 @@ class ChargeList
   				$charge = $dbElement;
   				break;
         case 4:
-          $comment = $dbElement;
+  				$target = $dbElement;
           break;
   			case 0:
-  				$target = $dbElement;
+          $comment = $dbElement;
   				array_push($charges, new Charge($id, $owner, $charge, $target, $comment));
   				break;
   		}

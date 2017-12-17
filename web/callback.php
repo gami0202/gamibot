@@ -3,8 +3,8 @@
 $testMode = false;
 
 if ($testMode) {
-	$text = "bot";  //TODO for test. plz delete
-	$userId = "aaa";  //TODO for test. plz delete
+	$text = "bot calc";  //TODO for test. plz delete
+	$userId = "a";  //TODO for test. plz delete
 
 } else {
 	$accessToken = getenv('LINE_CHANNEL_ACCESS_TOKEN');
@@ -87,10 +87,10 @@ function startWith($str, $prefix) {
 	return substr($str,  0, strlen($prefix)) === $prefix;
 }
 
-function mapToString($map) {
+function chargeMapToString($map) {
 	$string = "";
 	foreach ($map as $key => $value) {
-		$string = $string . $key . ": " . $value . "\n";
+		$string = $string . "〇" . $key . ": " . number_format($value) . "\n";
 	}
 	return $string;
 }
@@ -182,7 +182,8 @@ if ($text == 'bot') {
 
 	$response_format_text = [
 		"type" => "text",
-		"text" => mapToString($calcCharge)
+		"text" => "プラスの人が支払い、マイナスの人が受け取りをして下さい。\n"
+							. chargeMapToString($calcCharge)
 	];
 
 // 支払い削除処理
