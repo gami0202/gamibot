@@ -11,6 +11,48 @@ class ChargeList
     $this->chargeList = $this->parce($dbElements);
   }
 
+  function delete($id) {
+    if (!is_numeric($id)) {
+  		$response_format_text = [
+  			"type" => "text",
+  			"text" => "半角数字を入力してください"
+  		];
+    } else {
+      $index = 0;
+      $hitFlag = false;
+      foreach($this->chargeList as $charge) {
+        if ($id == $charge->id) {
+          array_splice($this->chargeList, $index, 1);
+          $hitFlag = true;
+          break;
+        }
+        $index++;
+      }
+
+      if (!$hitFlag) {
+        $response_format_text = [
+    			"type" => "text",
+    			"text" => "該当のIDが存在しませんでした。"
+    		];
+      } else {
+        $this->addDbForce();
+        $response_format_text =  [
+    			"type" => "text",
+    			"text" => $id . "を削除しました。"
+    		];
+      }
+    }
+    return $response_format_text;
+  }
+
+  function addDbForce() {
+    $file = 'charges.txt';
+    file_put_contents($file, "");
+    foreach ($this->chargeList as $charge) {
+      file_put_contents($file, $charge->toCsv(), FILE_APPEND);
+    }
+  }
+
   // line表示用文字列に変換
   function display() {
   	$str = "";
