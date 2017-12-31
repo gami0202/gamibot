@@ -33,15 +33,16 @@ include 'UserList.php';
 function illegalArgumentResponse() {
 	return [
 		"type" => "text",
-		"text" => "入力が正しくありません。\n'bot'でヘルプが確認できます。"
+		"text" => "入力が正しくありません\n'bot'でヘルプが確認できます"
 	];
 }
 
-function alreadyJoinedResponse() {
+function alreadyJoinedResponse($userId) {
 	$users = new UserList();
+	$userName = $users->getNameById($userId);
 	return [
 		"type" => "text",
-		"text" => "すでに参加しています。\n現在の参加者は、\n" . $users->display()
+		"text" => "あなたはすでに '" . $userName . "' として参加しています"
 	];
 }
 
@@ -49,16 +50,14 @@ function notExistUserNameResponse($userName) {
 	$users = new UserList();
 	return [
 		"type" => "text",
-		"text" => "指定されたユーザー " . $userName . " が存在しません。\n現在の参加者は、\n" . $users->display()
+		"text" => "指定されたユーザー " . $userName . " が存在しません\n現在の参加者は\n" . $users->display()
 	];
 }
 
 function notJoinedUserResponse() {
-	$users = new UserList();
 	return [
 		"type" => "text",
-		"text" => "あなたはユーザーとして参加していません。\n以下を実行して参加してください。\n"
-							. "bot join <名前>"
+		"text" => "あなたはユーザーとして参加していません"
 	];
 }
 
@@ -77,11 +76,7 @@ function isExistUserName($userName) {
 // userNameが見つからなかったときは、userIdをそのまま返します。
 function getUserNameById($userId) {
 	$users = new UserList();
-	$userName = $users->getName($userId);
-	if ($userName == null) {
-		return $userId;
-	}
-	return $userName;
+	return $users->getNameById($userId);
 }
 
 function startWith($str, $prefix) {
@@ -115,7 +110,7 @@ if ($text == 'あんこう') {
       "columns" => [
           [
             "title" => "支払い操作",
-            "text" => "支払い操作です",
+            "text" => "支払い操作です！",
             "actions" => [
 			          [
 			            "type" => "message",
@@ -136,7 +131,7 @@ if ($text == 'あんこう') {
           ],
           [
             "title" => "ユーザー操作",
-            "text" => "ユーザー操作です",
+            "text" => "ユーザー操作です！",
             "actions" => [
 			          [
 			            "type" => "message",
@@ -175,23 +170,25 @@ if ($text == 'あんこう') {
 		$users = new UserList();
 		$response_format_text = [
 			"type" => "text",
-			"text" => "以下から対象を入力してください。\n全員\n" . $users->display()
+			"text" => "以下から対象を入力してください\n全員\n" . $users->display()
 		];
 
 		file_put_contents('botStatus.txt', "waiting target");
 	}
 
 } else if ($botStatus == "waiting target") {
-	$userId = $text;
-	if ($userId != '全員' && !isExistUserName($userId)) {
-		$response_format_text = notExistUserNameResponse($userId);
+	$target = $text;
+	if ($target != '全員' && !isExistUserName($target)) {
+		$response_format_text = notExistUserNameResponse($target);
 	} else {
 		$response_format_text = [
 			"type" => "text",
 			"text" => "金額を入力してください"
 		];
 
-		if ($userId == '全員') { // 内部処理では all
+		file_put_contents('tmpOwnerId.txt', $userId);
+
+		if ($target == '全員') { // 内部処理では all
 			file_put_contents('tmpTarget.txt', 'all');
 		} else {
 			file_put_contents('tmpTarget.txt', $text);
@@ -200,7 +197,10 @@ if ($text == 'あんこう') {
 	}
 
 } else if ($botStatus == "waiting charge") {
-	if (!is_numeric($text)) {
+
+	if ($userId != file_get_contents('tmpOwnerId.txt')) {
+		// Nothing to do
+	} else if (!is_numeric($text)) {
 		$response_format_text = [
 			"type" => "text",
 			"text" => "半角数字を入力してください"
@@ -208,14 +208,16 @@ if ($text == 'あんこう') {
 	} else {
 		$response_format_text = [
 			"type" => "text",
-			"text" => "コメントを入力してください。(例: 〇〇代)"
+			"text" => "コメントを入力してください(例: 〇〇代)"
 		];
 		file_put_contents('botStatus.txt', "waiting comment");
 		file_put_contents('tmpValue.txt', $text);
 	}
 
 } else if ($botStatus == "waiting comment") {
-	if (!isAlreadyJoinUser($userId)) {
+	if ($userId != file_get_contents('tmpOwnerId.txt')) {
+		// Nothing to do
+	} else if (!isAlreadyJoinUser($userId)) {
 		$response_format_text = notJoinedUserResponse();
 	} else {
 		$comment = $text;
@@ -224,11 +226,20 @@ if ($text == 'あんこう') {
 		$charges = new ChargeList();
 		$newCharge = new Charge($charges->getNextId(), getUserNameById($userId), $value, $target, $comment);
 		$newCharge->addDb();
-		$response_format_text = [
-			"type" => "text",
-			"text" => $newCharge->owner . "さんが" . $newCharge->target . "さんに、"
-								. $newCharge->charge . "円を立て替えました。"
-		];
+
+		if ($newCharge->target == "all") {
+			$response_format_text = [
+				"type" => "text",
+				"text" => $newCharge->owner . "さんが全員分として "
+									. $newCharge->charge . "円を立て替えました。"
+			];
+		} else {
+			$response_format_text = [
+				"type" => "text",
+				"text" => $newCharge->owner . "さんが" . $newCharge->target . "さんに "
+									. $newCharge->charge . "円を立て替えました。"
+			];
+		}
 
 		file_put_contents('botStatus.txt', "");
 	}
@@ -238,7 +249,7 @@ if ($text == 'あんこう') {
 } else if ($text == "charge delete") {
 	$response_format_text = [
 		"type" => "text",
-		"text" => "削除するIDを入力してください。"
+		"text" => "削除するIDを入力してください"
 	];
 	file_put_contents('botStatus.txt', "waiting delete id");
 
@@ -258,7 +269,7 @@ if ($text == 'あんこう') {
 } else if ($text == "user join") {
 	$req = explode(" ", $text);
 	if (isAlreadyJoinUser($userId)) {
-		$response_format_text = alreadyJoinedResponse();
+		$response_format_text = alreadyJoinedResponse($userId);
 	} else if (count($req) == 2) {
 		$response_format_text = [
 			"type" => "text",
@@ -273,7 +284,7 @@ if ($text == 'あんこう') {
 	$users = new UserList();
 	$response_format_text = [
 		"type" => "text",
-		"text" => $newUser->name . "が参加しました。\n現在の参加者は、\n" . $users->display()
+		"text" => $newUser->name . "が参加しました\n現在の参加者は\n" . $users->display()
 	];
 
 	file_put_contents('botStatus.txt', "");
@@ -359,7 +370,7 @@ if ($text == 'あんこう') {
 
 		$response_format_text = [
 			"type" => "text",
-			"text" => "プラスの人が支払い、マイナスの人が受け取りをして下さい。\n"
+			"text" => "プラスの人が支払い、マイナスの人が受け取りをして下さい\n"
 								. chargeMapToString($calcCharge)
 		];
 
@@ -379,14 +390,14 @@ if ($text == 'あんこう') {
 		if (count($req) != 3) {
 			$response_format_text = illegalArgumentResponse();
 		} else if (isAlreadyJoinUser($userId)) {
-			$response_format_text = alreadyJoinedResponse();
+			$response_format_text = alreadyJoinedResponse($userId);
 		} else {
 			$newUser = new User($userId, $req[2]);
 			$newUser->addDb();
 			$users = new UserList();
 			$response_format_text = [
 				"type" => "text",
-		    "text" => $newUser->name . "が参加しました。\n現在の参加者は、\n" . $users->display()
+		    "text" => $newUser->name . "が参加しました\n現在の参加者は\n" . $users->display()
 		  ];
 		}
 
@@ -395,7 +406,7 @@ if ($text == 'あんこう') {
 		$users = new UserList();
 		$response_format_text = [
 			"type" => "text",
-			"text" => "現在の参加者は、\n" . $users->display()
+			"text" => "現在の参加者は\n" . $users->display()
 		];
 
 	// データ全削除
@@ -405,7 +416,7 @@ if ($text == 'あんこう') {
 		rename("charges.txt", $date . "_charges.txt");
 		$response_format_text = [
 			"type" => "text",
-			"text" => "記録された情報をすべて削除しました。"
+			"text" => "記録された情報をすべて削除しました"
 		];
 
 	//Joke

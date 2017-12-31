@@ -41,13 +41,14 @@ class UserList{
     return $userNames;
   }
 
-  function getName($userId) {
+  // userNameが見つからなかったときは、userIdをそのまま返します。
+  function getNameById($userId) {
     foreach ($this->userList as $user) {
       if ($user->id == $userId) {
         return $user->name;
       }
     }
-    return null;
+    return $userId;
   }
 
   // csvをUserクラスにごり押しパース
