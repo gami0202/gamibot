@@ -1,13 +1,16 @@
 <?php
-class UserList{
+
+include 'UserDao.php';
+
+class UserList
+{
   public $userList = array();
 
   // DBのデータをChargeクラスのリストにロード
   function __construct() {
-    $file = 'users.txt';
-    $current = file_get_contents($file);
-    $dbElements = str_getcsv($current);
-    $this->userList = $this->parce($dbElements);
+    $userDao = new UserDao();
+    $dbUsers = $userDao->get();
+    $this->userList = $this->parce($dbUsers);
   }
 
   // ユーザー数を返却
@@ -51,23 +54,11 @@ class UserList{
     return $userId;
   }
 
-  // csvをUserクラスにごり押しパース
-  private function parce($dbElements) {
+  // DBデータUserクラスにパース
+  private function parce($dbUsers) {
   	$users = array();
-
-  	$id = '';	$name = '';
-  	$count = 1;
-  	foreach ($dbElements as $dbElement) {
-  		switch ($count % 2) {
-  			case 1:
-  				$id = $dbElement;
-  				break;
-  			case 0:
-  				$name = $dbElement;
-  				array_push($users, new User($id, $name));
-  				break;
-  		}
-  		$count++;
+  	foreach ($dbUsers as $dbUser) {
+			array_push($users, new User($dbUser['user_id'], $dbUser['user_name']));
   	}
   	return $users;
   }

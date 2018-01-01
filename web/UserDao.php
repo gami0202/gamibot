@@ -1,6 +1,6 @@
 <?php
 
-class ChargeDao
+class UserDao
 {
   public $dsn;
   public $user;
@@ -16,7 +16,7 @@ class ChargeDao
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
 
-      $sql = "SELECT * FROM charges";
+      $sql = "SELECT * FROM users";
       $stmt = $dbh->query($sql);
       return $stmt;
 
@@ -27,30 +27,14 @@ class ChargeDao
     }
   }
 
-  function post($owner, $value, $target, $comment) {
+  function post($userId, $userName) {
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
 
-      $sql = "INSERT INTO charges (owner, value, target, comment) VALUES ("
-            . "'" . $owner . "', "
-            . "'" . $value . "', "
-            . "'" . $target . "', "
-            . "'" . $comment . "'"
+      $sql = "INSERT INTO users (user_id, user_name) VALUES ("
+            . "'" . $userId . "', "
+            . "'" . $userName . "'"
             .")";
-      $stmt = $dbh->query($sql);
-
-    } catch (PDOException $e) {
-      echo 'データベースにアクセスできません！' . $e->getMessage();
-    } finally {
-      $dbh = null; //close
-    }
-  }
-
-  function delete($id) {
-    try {
-      $dbh = new PDO($this->dsn, $this->user, $this->password);
-
-      $sql = "DELETE FROM charges WHERE id=" . $id;
       $stmt = $dbh->query($sql);
 
     } catch (PDOException $e) {

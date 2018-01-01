@@ -284,12 +284,14 @@ if ($text == 'あんこう') {
 		file_put_contents('botStatus.txt', "waiting user name");
 	}
 } else if ($botStatus == "waiting user name") {
-	$newUser = new User($userId, $text);
-	$newUser->addDb();
+	$userName = $text;
+	$userDao = new UserDao();
+	$userDao->post($userId, $userName);
+
 	$users = new UserList();
 	$response_format_text = [
 		"type" => "text",
-		"text" => $newUser->name . "が参加しました\n現在の参加者は\n" . $users->display()
+		"text" => $userName . "が参加しました\n現在の参加者は\n" . $users->display()
 	];
 
 	file_put_contents('botStatus.txt', "");
@@ -405,17 +407,19 @@ if ($text == 'あんこう') {
 	// ユーザー追加処理
 	} else if (startWith($text, 'bot join')) {
 		$req = explode(" ", $text);
-		if (count($req) != 3) {
-			$response_format_text = illegalArgumentResponse();
-		} else if (isAlreadyJoinUser($userId)) {
-			$response_format_text = alreadyJoinedResponse($userId);
-		} else {
-			$newUser = new User($userId, $req[2]);
-			$newUser->addDb();
+			if (isAlreadyJoinUser($userId)) {
+				$response_format_text = alreadyJoinedResponse($userId);
+			} else if (count($req) != 3) {
+				$response_format_text = illegalArgumentResponse();
+			} else {
+			$userName = $req[2];
+			$userDao = new UserDao();
+			$userDao->post($userId, $userName);
+
 			$users = new UserList();
 			$response_format_text = [
 				"type" => "text",
-		    "text" => $newUser->name . "が参加しました\n現在の参加者は\n" . $users->display()
+		    "text" => $userName . "が参加しました\n現在の参加者は\n" . $users->display()
 		  ];
 		}
 
