@@ -221,23 +221,24 @@ if ($text == 'あんこう') {
 		$response_format_text = notJoinedUserResponse();
 	} else {
 		$comment = $text;
+		$ownerName = getUserNameById($userId);
 		$target = file_get_contents('tmpTarget.txt');
 		$value = file_get_contents('tmpValue.txt');
-		$charges = new ChargeList();
-		$newCharge = new Charge($charges->getNextId(), getUserNameById($userId), $value, $target, $comment);
-		$newCharge->addDb();
 
-		if ($newCharge->target == "all") {
+		$chargeDao = new ChargeDao();
+		$chargeDao->post($ownerName, $value, $target, $comment);
+
+		if ($target == "all") {
 			$response_format_text = [
 				"type" => "text",
-				"text" => $newCharge->owner . "さんが全員分として "
-									. $newCharge->charge . "円を立て替えました。"
+				"text" => $ownerName . "さんが全員分として "
+									. $value . "円を立て替えました。"
 			];
 		} else {
 			$response_format_text = [
 				"type" => "text",
-				"text" => $newCharge->owner . "さんが" . $newCharge->target . "さんに "
-									. $newCharge->charge . "円を立て替えました。"
+				"text" => $ownerName . "さんが" . $target . "さんに "
+									. $value . "円を立て替えました。"
 			];
 		}
 
@@ -260,8 +261,12 @@ if ($text == 'あんこう') {
 			"text" => "半角数字を入力してください"
 		];
 	} else {
-		$chargeList = new ChargeList();
-		$response_format_text = $chargeList->delete($text);
+		$chargeDao = new ChargeDao();
+		$chargeDao->delete($text);
+		$response_format_text =  [
+			"type" => "text",
+			"text" => $text . "を削除しました。"
+		];
 		file_put_contents('botStatus.txt', "");
 	}
 
@@ -315,13 +320,16 @@ if ($text == 'あんこう') {
 		} else if ($req[3] != 'all' && !isExistUserName($req[3])) {
 			$response_format_text = notExistUserNameResponse($req[3]);
 		} else {
-			$charges = new ChargeList();
-			$newCharge = new Charge($charges->getNextId(), getUserNameById($userId), $req[2], $req[3], $req[4]);
-			$newCharge->addDb();
+			$ownerName = getUserNameById($userId);
+			$value = $req[2];
+			$target = $req[3];
+			$comment = $req[4];
+			$chargeDao = new ChargeDao();
+			$chargeDao->post($ownerName, $value, $target, $comment);
 			$response_format_text = [
 				"type" => "text",
-		    "text" => $newCharge->owner . "さんが" . $newCharge->target . "さんに、"
-									. $newCharge->charge . "円を立て替えました。"
+		    "text" => $ownerName . "さんが" . $target . "さんに、"
+									. $value . "円を立て替えました。"
 		  ];
 		}
 
@@ -379,9 +387,19 @@ if ($text == 'あんこう') {
 		$req = explode(" ", $text);
 		if (count($req) != 3) {
 			$response_format_text = illegalArgumentResponse();
+		} else if (!is_numeric($req[2])) {
+			$response_format_text = [
+				"type" => "text",
+				"text" => "半角数字を入力してください"
+			];
 		} else {
-			$chargeList = new ChargeList();
-			$response_format_text = $chargeList->delete($req[2]);
+			$id = $req[2];
+			$chargeDao = new ChargeDao();
+			$chargeDao->delete($id);
+			$response_format_text =  [
+				"type" => "text",
+				"text" => $id . "を削除しました。"
+			];
 		}
 
 	// ユーザー追加処理
