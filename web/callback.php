@@ -114,7 +114,7 @@ if ($text == 'あんこう') {
 	array_push($chargeActions, new MessageTemplateActionBuilder("清算", "bot calc"));
 
 	$userActions = array();
-	array_push($userActions, new MessageTemplateActionBuilder("参加", "user join"));
+	array_push($userActions, new MessageTemplateActionBuilder("参加", "bot join"));
 	array_push($userActions, new MessageTemplateActionBuilder("一覧", "bot user list"));
 	array_push($userActions, new MessageTemplateActionBuilder("! 支払い削除 !", "charge delete"));
 
@@ -241,26 +241,6 @@ if ($text == 'あんこう') {
 		file_put_contents('botStatus.txt', "");
 	}
 
-//// ユーザー処理 ////
-} else if ($text == "user join") {
-	$req = explode(" ", $text);
-	if (isAlreadyJoinUser($userId)) {
-		$sendMessage = alreadyJoinedResponse($userId);
-	} else if (count($req) == 2) {
-		$sendMessage = new TextMessageBuilder("ユーザー名を入力してください");
-		file_put_contents('botStatus.txt', "waiting user name");
-	}
-} else if ($botStatus == "waiting user name") {
-	$userName = $text;
-	$userDao = new UserDao();
-	$userDao->post($userId, $userName);
-
-	$users = new UserList();
-	$sendMessage = new TextMessageBuilder(
-							$userName . "が参加しました\n現在の参加者は\n" . $users->display());
-
-	file_put_contents('botStatus.txt', "");
-
 //CLI
 } else {
 	// help表示
@@ -356,20 +336,20 @@ if ($text == 'あんこう') {
 		}
 
 	// ユーザー追加処理
-	} else if (startWith($text, 'bot join')) {
-		$req = explode(" ", $text);
+	} else if ($text == 'bot join') {
 			if (isAlreadyJoinUser($userId)) {
 				$sendMessage = alreadyJoinedResponse($userId);
-			} else if (count($req) != 3) {
-				$sendMessage = illegalArgumentResponse();
 			} else {
-			$userName = $req[2];
-			$userDao = new UserDao();
-			$userDao->post($userId, $userName);
+				$response = $bot->getProfile($userId);
+			  $profile = $response->getJSONDecodedBody();
+			  $userName = $profile['displayName'];
 
-			$users = new UserList();
-			$sendMessage = new TextMessageBuilder(
-				$userName . "が参加しました\n現在の参加者は\n" . $users->display());
+				$userDao = new UserDao();
+				$userDao->post($userId, $userName);
+
+				$users = new UserList();
+				$sendMessage = new TextMessageBuilder(
+					$userName . "が参加しました\n現在の参加者は\n" . $users->display());
 		}
 
 	// 参加済みユーザーを一覧表示
