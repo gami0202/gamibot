@@ -246,7 +246,7 @@ if ($text == 'あんこう') {
 	if ($text == 'bot') {
 		$sendMessage = new TextMessageBuilder(
 							"[Help]\n"
-							. "〇ユーザーとして参加:\n  bot join <人名>\n"
+							. "〇ユーザーとして参加:\n  bot join\n"
 							. "〇参加者一覧:\n  bot user list\n"
 							. "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
 							. "〇支払一覧:\n  bot list\n"
@@ -359,9 +359,12 @@ if ($text == 'あんこう') {
 
 	// データ全削除
 	} else if ($text == 'bot clear') {
-		$date = date("Y-m-d-H-i-s");
-		rename("users.txt", $date . "_users.txt");
-		rename("charges.txt", $date . "_charges.txt");
+		$chargeDao = new ChargeDao();
+		$userDao = new UserDao();
+
+		$chargeDao->deleteAll();
+		$userDao->deleteAll();
+
 		$sendMessage = new TextMessageBuilder("記録された情報をすべて削除しました");
 
 	//Joke
