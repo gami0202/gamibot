@@ -135,8 +135,38 @@ if ($text == 'あんこう') {
 		$sendMessage = notJoinedUserResponse();
 	} else {
 		$users = new UserList();
-		$sendMessage = new TextMessageBuilder(
-			"以下から対象を入力してください\n全員\n" . $users->display());
+		$userNames = $users->getNameArray();
+
+		if (count($userNames) > 29) { // carousel は 3*10 までしか表示できない
+			$sendMessage = new TextMessageBuilder(
+				"以下から対象を入力してください\n全員\n" . $users->display());
+		} else {
+			$columns = array();
+			$actions = array();
+
+			array_push($actions, new MessageTemplateActionBuilder("全員", "全員"));
+			$index = 1;
+			foreach ($userNames as $userName) {
+				array_push($actions, new MessageTemplateActionBuilder($userName, $userName));
+				if ($index++ %3 == 2) { // carousel のアクションは3つまで
+					array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "対象一覧です！", null, $actions));
+					$actions = array();
+				}
+			}
+
+			if (count($actions) % 3 != 0) {
+				array_push($actions, new MessageTemplateActionBuilder("ダミー", "ダミー"));
+				if (count($actions) % 3 != 0) {
+					array_push($actions, new MessageTemplateActionBuilder("ダミー", "ダミー"));
+				}
+				array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "対象一覧です！", null, $actions));
+			}
+
+			$carousel = new CarouselTemplateBuilder($columns);
+			$sendMessage = new TemplateMessageBuilder("this is a carousel template", $carousel);
+		}
+
+
 		file_put_contents('botStatus.txt', "waiting target");
 	}
 
