@@ -1,14 +1,33 @@
 <?php
 
-$testMode = false;
+////////////////// include /////////////////////
+include 'Charge.php';
+include 'ChargeList.php';
+include 'User.php';
+include 'UserList.php';
+require_once(__DIR__."/../vendor/autoload.php");
 
+use \LINE\LINEBot\HTTPClient\CurlHTTPClient;
+use \LINE\LINEBot;
+use \LINE\LINEBot\MessageBuilder\TextMessageBuilder;
+use \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder;
+use \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselTemplateBuilder;
+use \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselColumnTemplateBuilder;
+use \LINE\LINEBot\TemplateActionBuilder\MessageTemplateActionBuilder;
+
+////////////////// env /////////////////////
+
+$accessToken = getenv('LINE_CHANNEL_ACCESS_TOKEN');
+$secretToken = getenv('LINE_CHANNEL_SECRET');
+$httpClient = new CurlHTTPClient($accessToken);
+$bot = new LINEBot($httpClient, ['channelSecret' => $secretToken]);
+
+$testMode = false;
 if ($testMode) {
-	$text = "bot list";
+	$text = "あんこう";
 	$userId = "a";
 
 } else {
-	$accessToken = getenv('LINE_CHANNEL_ACCESS_TOKEN');
-
 	//ユーザーからのメッセージ取得
 	$json_string = file_get_contents('php://input');
 	$jsonObj = json_decode($json_string);
@@ -23,42 +42,29 @@ if ($testMode) {
 	$lineUserName = $jsonObj->{"events"}[0]->{"source"}->{"userName"};
 }
 
-////////////////// include /////////////////////
-include 'Charge.php';
-include 'ChargeList.php';
-include 'User.php';
-include 'UserList.php';
-
 ////////////////// Util /////////////////////
 function illegalArgumentResponse() {
-	return [
-		"type" => "text",
-		"text" => "入力が正しくありません\n'bot'でヘルプが確認できます"
-	];
+	return new TextMessageBuilder("入力が正しくありません\n'bot'でヘルプが確認できます");
 }
 
 function alreadyJoinedResponse($userId) {
 	$users = new UserList();
 	$userName = $users->getNameById($userId);
-	return [
-		"type" => "text",
-		"text" => "あなたはすでに '" . $userName . "' として参加しています"
-	];
+	return new TextMessageBuilder("あなたはすでに '" . $userName . "' として参加しています");
 }
 
 function notExistUserNameResponse($userName) {
 	$users = new UserList();
-	return [
-		"type" => "text",
-		"text" => "指定されたユーザー " . $userName . " が存在しません\n現在の参加者は\n" . $users->display()
-	];
+	return new TextMessageBuilder(
+		"指定されたユーザー " . $userName . " が存在しません\n現在の参加者は\n" . $users->display());
 }
 
 function notJoinedUserResponse() {
-	return [
-		"type" => "text",
-		"text" => "あなたはユーザーとして参加していません"
-	];
+	return new TextMessageBuilder('あなたはユーザーとして参加していません');
+}
+
+function notNumericResponse() {
+	return new TextMessageBuilder('半角数字を入力してください');
 }
 
 function isAlreadyJoinUser($userId) {
@@ -102,89 +108,44 @@ if (!$testMode) {
 $botStatus = file_get_contents('botStatus.txt');
 
 if ($text == 'あんこう') {
-	$response_format_text = [
-  "type" => "template",
-  "altText" => "this is a carousel template",
-  "template" => [
-      "type" => "carousel",
-      "columns" => [
-          [
-            "title" => "支払い操作",
-            "text" => "支払い操作です！",
-            "actions" => [
-			          [
-			            "type" => "message",
-			            "label" => "登録",
-			            "text" => "charge add"
-			          ],
-			          [
-			            "type" => "message",
-			            "label" => "一覧",
-			            "text" => "bot list"
-			          ],
-			          [
-			            "type" => "message",
-			            "label" => "清算",
-			            "text" => "bot calc"
-			          ]
-            ]
-          ],
-          [
-            "title" => "ユーザー操作",
-            "text" => "ユーザー操作です！",
-            "actions" => [
-			          [
-			            "type" => "message",
-			            "label" => "参加",
-			            "text" => "user join"
-			          ],
-			          [
-			            "type" => "message",
-			            "label" => "一覧",
-			            "text" => "bot user list"
-			          ],
-			          [
-			            "type" => "message",
-			            "label" => "! 支払い削除 !",
-			            "text" => "charge delete"
-			          ]
-            ]
-          ],
-	  	]
-		]
-	];
+	$chargeActions = array();
+	array_push($chargeActions, new MessageTemplateActionBuilder("登録", "charge add"));
+	array_push($chargeActions, new MessageTemplateActionBuilder("一覧", "bot list"));
+	array_push($chargeActions, new MessageTemplateActionBuilder("清算", "bot calc"));
+
+	$userActions = array();
+	array_push($userActions, new MessageTemplateActionBuilder("参加", "user join"));
+	array_push($userActions, new MessageTemplateActionBuilder("一覧", "bot user list"));
+	array_push($userActions, new MessageTemplateActionBuilder("! 支払い削除 !", "charge delete"));
+
+	$columns = array();
+	array_push($columns, new CarouselColumnTemplateBuilder("支払い操作", "支払い操作です！", null, $chargeActions));
+	array_push($columns, new CarouselColumnTemplateBuilder("ユーザー操作", "ユーザー操作です！", null, $userActions));
+
+	$carousel = new CarouselTemplateBuilder($columns);
+	$sendMessage = new TemplateMessageBuilder("this is a carousel template", $carousel);
 
 } else if ($text == "キャンセル") {
-	$response_format_text = [
-		"type" => "text",
-		"text" => "現在の処理をキャンセルしました"
-	];
-
 	file_put_contents('botStatus.txt', "");
+	$sendMessage = new TextMessageBuilder('現在の処理をキャンセルしました');
 
 //// 支払い追加処理 ////
 } else if ($text == "charge add") {
 	if (!isAlreadyJoinUser($userId)) {
-		$response_format_text = notJoinedUserResponse();
+		$sendMessage = notJoinedUserResponse();
 	} else {
 		$users = new UserList();
-		$response_format_text = [
-			"type" => "text",
-			"text" => "以下から対象を入力してください\n全員\n" . $users->display()
-		];
-
+		$sendMessage = new TextMessageBuilder(
+			"以下から対象を入力してください\n全員\n" . $users->display());
 		file_put_contents('botStatus.txt', "waiting target");
 	}
 
 } else if ($botStatus == "waiting target") {
 	$target = $text;
 	if ($target != '全員' && !isExistUserName($target)) {
-		$response_format_text = notExistUserNameResponse($target);
+		$sendMessage = notExistUserNameResponse($target);
 	} else {
-		$response_format_text = [
-			"type" => "text",
-			"text" => "金額を入力してください"
-		];
+		$sendMessage = new TextMessageBuilder('金額を入力してください');
 
 		file_put_contents('tmpOwnerId.txt', $userId);
 
@@ -201,15 +162,9 @@ if ($text == 'あんこう') {
 	if ($userId != file_get_contents('tmpOwnerId.txt')) {
 		// Nothing to do
 	} else if (!is_numeric($text)) {
-		$response_format_text = [
-			"type" => "text",
-			"text" => "半角数字を入力してください"
-		];
+		$sendMessage = notNumericResponse();
 	} else {
-		$response_format_text = [
-			"type" => "text",
-			"text" => "コメントを入力してください(例: 〇〇代)"
-		];
+		$sendMessage = new TextMessageBuilder('コメントを入力してください(例: 〇〇代)');
 		file_put_contents('botStatus.txt', "waiting comment");
 		file_put_contents('tmpValue.txt', $text);
 	}
@@ -218,7 +173,7 @@ if ($text == 'あんこう') {
 	if ($userId != file_get_contents('tmpOwnerId.txt')) {
 		// Nothing to do
 	} else if (!isAlreadyJoinUser($userId)) {
-		$response_format_text = notJoinedUserResponse();
+		$sendMessage = notJoinedUserResponse();
 	} else {
 		$comment = $text;
 		$ownerName = getUserNameById($userId);
@@ -229,17 +184,11 @@ if ($text == 'あんこう') {
 		$chargeDao->post($ownerName, $value, $target, $comment);
 
 		if ($target == "all") {
-			$response_format_text = [
-				"type" => "text",
-				"text" => $ownerName . "さんが全員分として "
-									. $value . "円を立て替えました。"
-			];
+			$sendMessage = new TextMessageBuilder(
+				$ownerName . "さんが全員分として " . $value . "円を立て替えました");
 		} else {
-			$response_format_text = [
-				"type" => "text",
-				"text" => $ownerName . "さんが" . $target . "さんに "
-									. $value . "円を立て替えました。"
-			];
+			$sendMessage = new TextMessageBuilder(
+				$ownerName . "さんが" . $target . "さんに " . $value . "円を立て替えました");
 		}
 
 		file_put_contents('botStatus.txt', "");
@@ -248,25 +197,17 @@ if ($text == 'あんこう') {
 
 //// 支払い削除 ////
 } else if ($text == "charge delete") {
-	$response_format_text = [
-		"type" => "text",
-		"text" => "削除するIDを入力してください"
-	];
+	$sendMessage = new TextMessageBuilder("削除するIDを入力してください");
 	file_put_contents('botStatus.txt', "waiting delete id");
 
 } else if ($botStatus == "waiting delete id") {
 	if (!is_numeric($text)) {
-		$response_format_text = [
-			"type" => "text",
-			"text" => "半角数字を入力してください"
-		];
+		$sendMessage = notNumericResponse();
 	} else {
 		$chargeDao = new ChargeDao();
 		$chargeDao->delete($text);
-		$response_format_text =  [
-			"type" => "text",
-			"text" => $text . "を削除しました。"
-		];
+
+		$sendMessage = new TextMessageBuilder($text . "を削除しました");
 		file_put_contents('botStatus.txt', "");
 	}
 
@@ -274,13 +215,9 @@ if ($text == 'あんこう') {
 } else if ($text == "user join") {
 	$req = explode(" ", $text);
 	if (isAlreadyJoinUser($userId)) {
-		$response_format_text = alreadyJoinedResponse($userId);
+		$sendMessage = alreadyJoinedResponse($userId);
 	} else if (count($req) == 2) {
-		$response_format_text = [
-			"type" => "text",
-			"text" => "ユーザー名を入力してください"
-		];
-
+		$sendMessage = new TextMessageBuilder("ユーザー名を入力してください");
 		file_put_contents('botStatus.txt', "waiting user name");
 	}
 } else if ($botStatus == "waiting user name") {
@@ -289,10 +226,8 @@ if ($text == 'あんこう') {
 	$userDao->post($userId, $userName);
 
 	$users = new UserList();
-	$response_format_text = [
-		"type" => "text",
-		"text" => $userName . "が参加しました\n現在の参加者は\n" . $users->display()
-	];
+	$sendMessage = new TextMessageBuilder(
+							$userName . "が参加しました\n現在の参加者は\n" . $users->display());
 
 	file_put_contents('botStatus.txt', "");
 
@@ -300,48 +235,41 @@ if ($text == 'あんこう') {
 } else {
 	// help表示
 	if ($text == 'bot') {
-		$response_format_text = [
-			"type" => "text",
-	    "text" => "[Help]\n"
-								. "〇ユーザーとして参加:\n  bot join <人名>\n"
-								. "〇参加者一覧:\n  bot user list\n"
-								. "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
-								. "〇支払一覧:\n  bot list\n"
-								. "〇支払清算:\n  bot calc"
-	  ];
+		$sendMessage = new TextMessageBuilder(
+							"[Help]\n"
+							. "〇ユーザーとして参加:\n  bot join <人名>\n"
+							. "〇参加者一覧:\n  bot user list\n"
+							. "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
+							. "〇支払一覧:\n  bot list\n"
+							. "〇支払清算:\n  bot calc");
 
 	// 料金追加処理
 	} else if (startWith($text, 'bot add')) {
 		$req = explode(" ", $text);
 		if (!isAlreadyJoinUser($userId)) {
-			$response_format_text = notJoinedUserResponse();
+			$sendMessage = notJoinedUserResponse();
 		} else if (count($req) != 5) {
-			$response_format_text = illegalArgumentResponse();
+			$sendMessage = illegalArgumentResponse();
 		} else if (!is_numeric($req[2])) {
-			$response_format_text = illegalArgumentResponse();
+			$sendMessage = illegalArgumentResponse();
 		} else if ($req[3] != 'all' && !isExistUserName($req[3])) {
-			$response_format_text = notExistUserNameResponse($req[3]);
+			$sendMessage = notExistUserNameResponse($req[3]);
 		} else {
 			$ownerName = getUserNameById($userId);
 			$value = $req[2];
 			$target = $req[3];
 			$comment = $req[4];
+
 			$chargeDao = new ChargeDao();
 			$chargeDao->post($ownerName, $value, $target, $comment);
-			$response_format_text = [
-				"type" => "text",
-		    "text" => $ownerName . "さんが" . $target . "さんに、"
-									. $value . "円を立て替えました。"
-		  ];
+
+			$sendMessage = new TextMessageBuilder($ownerName . "さんが" . $target . "さんに " . $value . " 円を立て替えました");
 		}
 
 	// 料金一覧返却
 	} else if ($text == 'bot list') {
 		$charges = new ChargeList();
-		$response_format_text = [
-			"type" => "text",
-			"text" => $charges->display()
-		];
+		$sendMessage = new TextMessageBuilder($charges->display());
 
 	// 料金清算処理
 	} else if ($text == 'bot calc') {
@@ -378,95 +306,60 @@ if ($text == 'あんこう') {
 			}
 		}
 
-		$response_format_text = [
-			"type" => "text",
-			"text" => "プラスの人が支払い、マイナスの人が受け取りをして下さい\n"
-								. chargeMapToString($calcCharge)
-		];
+		$sendMessage = new TextMessageBuilder(
+									"プラスの人が支払い、マイナスの人が受け取りをして下さい\n"
+									. chargeMapToString($calcCharge));
 
 	// 支払い削除処理
 	} else if (startWith($text, 'bot delete')) {
 		$req = explode(" ", $text);
 		if (count($req) != 3) {
-			$response_format_text = illegalArgumentResponse();
+			$sendMessage = illegalArgumentResponse();
 		} else if (!is_numeric($req[2])) {
-			$response_format_text = [
-				"type" => "text",
-				"text" => "半角数字を入力してください"
-			];
+			$sendMessage = notNumericResponse();
 		} else {
 			$id = $req[2];
 			$chargeDao = new ChargeDao();
 			$chargeDao->delete($id);
-			$response_format_text =  [
-				"type" => "text",
-				"text" => $id . "を削除しました。"
-			];
+
+			$sendMessage = new TextMessageBuilder($id . "を削除しました");
 		}
 
 	// ユーザー追加処理
 	} else if (startWith($text, 'bot join')) {
 		$req = explode(" ", $text);
 			if (isAlreadyJoinUser($userId)) {
-				$response_format_text = alreadyJoinedResponse($userId);
+				$sendMessage = alreadyJoinedResponse($userId);
 			} else if (count($req) != 3) {
-				$response_format_text = illegalArgumentResponse();
+				$sendMessage = illegalArgumentResponse();
 			} else {
 			$userName = $req[2];
 			$userDao = new UserDao();
 			$userDao->post($userId, $userName);
 
 			$users = new UserList();
-			$response_format_text = [
-				"type" => "text",
-		    "text" => $userName . "が参加しました\n現在の参加者は\n" . $users->display()
-		  ];
+			$sendMessage = new TextMessageBuilder(
+				$userName . "が参加しました\n現在の参加者は\n" . $users->display());
 		}
 
 	// 参加済みユーザーを一覧表示
 	} else if ($text == 'bot user list') {
 		$users = new UserList();
-		$response_format_text = [
-			"type" => "text",
-			"text" => "現在の参加者は\n" . $users->display()
-		];
+		$sendMessage = new TextMessageBuilder("現在の参加者は\n" . $users->display());
 
 	// データ全削除
 	} else if ($text == 'bot clear') {
 		$date = date("Y-m-d-H-i-s");
 		rename("users.txt", $date . "_users.txt");
 		rename("charges.txt", $date . "_charges.txt");
-		$response_format_text = [
-			"type" => "text",
-			"text" => "記録された情報をすべて削除しました"
-		];
+		$sendMessage = new TextMessageBuilder("記録された情報をすべて削除しました");
 
 	//Joke
 	} else if (strpos($text, "ガルパン") !== false) {
-		$response_format_text = [
-			"type" => "text",
-			"text" => "ガルパンはいいぞ"
-		];
+		$sendMessage = new TextMessageBuilder("ガルパンはいいぞ");
 	}
 }
 
-if ($testMode) {
-	echo $response_format_text["text"];
-} else {
-	$post_data = [
-		"replyToken" => $replyToken,
-		"messages" => [$response_format_text]
-		];
-
-	$ch = curl_init("https://api.line.me/v2/bot/message/reply");
-	curl_setopt($ch, CURLOPT_POST, true);
-	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
-	curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-	    'Content-Type: application/json; charser=UTF-8',
-	    'Authorization: Bearer ' . $accessToken
-	    ));
-	$result = curl_exec($ch);
-	curl_close($ch);
+if ($sendMessage != null) {
+	$bot->replyMessage($replyToken, $sendMessage);
 }
