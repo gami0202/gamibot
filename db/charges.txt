@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE charges (
 	id serial,
   owner character varying,
   value numeric,

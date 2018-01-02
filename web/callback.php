@@ -149,7 +149,7 @@ if ($text == 'あんこう') {
 			foreach ($userNames as $userName) {
 				array_push($actions, new MessageTemplateActionBuilder($userName, $userName));
 				if ($index++ %3 == 2) { // carousel のアクションは3つまで
-					array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "対象一覧です！", null, $actions));
+					array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "たてかえ対象を選んでください", null, $actions));
 					$actions = array();
 				}
 			}
@@ -159,13 +159,12 @@ if ($text == 'あんこう') {
 				if (count($actions) % 3 != 0) {
 					array_push($actions, new MessageTemplateActionBuilder("ダミー", "ダミー"));
 				}
-				array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "対象一覧です！", null, $actions));
+				array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "たてかえ対象を選んでください", null, $actions));
 			}
 
 			$carousel = new CarouselTemplateBuilder($columns);
 			$sendMessage = new TemplateMessageBuilder("this is a carousel template", $carousel);
 		}
-
 
 		file_put_contents('botStatus.txt', "waiting target");
 	}
@@ -251,7 +250,8 @@ if ($text == 'あんこう') {
 							. "〇参加者一覧:\n  bot user list\n"
 							. "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
 							. "〇支払一覧:\n  bot list\n"
-							. "〇支払清算:\n  bot calc");
+							. "〇支払清算:\n  bot calc\n"
+							. "〇支払削除:\n  bot delete <id>");
 
 	// 料金追加処理
 	} else if (startWith($text, 'bot add')) {

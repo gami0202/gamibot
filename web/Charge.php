@@ -17,7 +17,12 @@ class Charge
 
     // 変数を、lineメッセージに表示される文字列に変換
     public function display() {
+			if ($this->target == "all") {
+				$target = "全員";
+			} else {
+				$target = $this->target;
+			}
       return $this->id . ", " . $this->owner . ", " . $this->charge . ", "
-			. $this->target . ", " . $this->comment . "\n";
+			. $target . ", " . $this->comment . "\n";
     }
 }

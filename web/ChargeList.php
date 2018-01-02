@@ -15,7 +15,7 @@ class ChargeList
 
   // line表示用文字列に変換
   function display() {
-  	$str = "";
+  	$str = "id, 支払者, 金額, 立替先, コメント\n";
   	foreach($this->chargeList as $charge) {
   		$str .= $charge->display();
   	}
