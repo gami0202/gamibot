@@ -92,7 +92,18 @@ function startWith($str, $prefix) {
 function chargeMapToString($map) {
 	$string = "";
 	foreach ($map as $key => $value) {
-		$string = $string . "〇" . $key . ": " . number_format($value) . "\n";
+		$string = $string . "〇" . $key . ": " . number_format($value) . "円\n";
+	}
+	return $string;
+}
+
+function payExampleToString($map) {
+	$string = "";
+	foreach ($map as $reciever => $payerMap) {
+		$string = $string . "〇受け取り: " . $reciever . "\n";
+		foreach ($payerMap as $payer => $value) {
+			$string = $string . "  ・" . $payer . ": " . number_format($value) . "円\n";
+		}
 	}
 	return $string;
 }
@@ -316,9 +327,52 @@ if ($text == 'あんこう') {
 			}
 		}
 
-		$sendMessage = new TextMessageBuilder(
-									"プラスの人が支払い、マイナスの人が受け取りをして下さい\n"
-									. chargeMapToString($calcCharge));
+		$message = "プラスの人が支払い、マイナスの人が受け取りをして下さい\n"
+									. chargeMapToString($calcCharge);
+
+		//// 支払い例の計算 ////
+		// プラスマイナスを分ける
+		$plusValues = array();
+		$minusValues = array();
+		foreach ($calcCharge as $owner => $value) {
+			if ($value < 0) {
+				$minusValues[$owner] = -1 * $value;
+			} else {
+				$plusValues[$owner] = $value;
+			}
+		}
+
+		// 絶対値が大きい順にソート
+		arsort($plusValues);
+		arsort($minusValues);
+
+		// プラスの大きい人からマイナスの大きい人へ支払いをしていく
+		$payExample = array();
+		foreach ($minusValues as $reciever => $rvalue) {
+		  $recieveMap = array();
+		  $restRecieveValue = $rvalue;
+
+		  foreach ($plusValues as $payer => $pvalue) {
+		    if ($pvalue == 0) {
+		      continue;
+		    } else if ($restRecieveValue <= $pvalue) { // reciverの受け取り完了
+		      $recieveMap[$payer] = $restRecieveValue;
+		      $plusValues[$payer] -= $restRecieveValue;
+		      break;
+		    } else {
+		      array_merge($recieveMap, array($payer => $restPayValue));
+		      $recieveMap[$payer] = $pvalue;
+		      $restRecieveValue -= $pvalue;
+		      $plusValues[$payer] = 0;
+		    }
+		  }
+		  $payExample[$reciever] = $recieveMap;
+		}
+
+		$message = $message . "\n"
+			. "支払い例\n" . payExampleToString($payExample);
+
+		$sendMessage = new TextMessageBuilder($message);
 
 	// 支払い削除処理
 	} else if (startWith($text, 'bot delete')) {
