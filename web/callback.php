@@ -85,6 +85,19 @@ function getUserNameById($userId) {
 	return $users->getNameById($userId);
 }
 
+// ユーザー一覧から、ユーザー名が前方一致したものを返却。
+// 最初にヒットしたものを返す。見つからなければnullを返す。
+//TODO 複数ヒットしたらエラーにできるように
+function getUserNameWithForwardMatch($userNamePart) {
+	$users = new UserList();
+	foreach ($users->userList as $user) {
+		if (startWith($user->name, $userNamePart)) {
+	    return $user->name;
+		}
+	}
+	return null;
+}
+
 function startWith($str, $prefix) {
 	return substr($str,  0, strlen($prefix)) === $prefix;
 }
@@ -273,12 +286,13 @@ if ($text == 'あんこう') {
 			$sendMessage = illegalArgumentResponse();
 		} else if (!is_numeric($req[2])) {
 			$sendMessage = illegalArgumentResponse();
-		} else if ($req[3] != 'all' && !isExistUserName($req[3])) {
+		} else if ($req[3] != 'all' && !isExistUserName($req[3])
+		 	&& getUserNameWithForwardMatch($req[3]) == null) {
 			$sendMessage = notExistUserNameResponse($req[3]);
 		} else {
 			$ownerName = getUserNameById($userId);
 			$value = $req[2];
-			$target = $req[3];
+			$target = getUserNameWithForwardMatch($req[3]);
 			$comment = $req[4];
 
 			$chargeDao = new ChargeDao();
