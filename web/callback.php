@@ -260,11 +260,17 @@ if ($text == 'あんこう') {
 		$sendMessage = notNumericResponse();
 	} else {
 		$chargeDao = new ChargeDao();
-		$chargeDao->delete($text, $squadId);
+		$line = $chargeDao->delete($text, $squadId);
 
-		//TODO 削除できなかったら、メッセージを変える
-		$sendMessage = new TextMessageBuilder("[削除完了]\n{$text}を削除しました");
-		file_put_contents('botStatus.txt', "");
+		if ($line == 0) {
+			$sendMessage = new TextMessageBuilder("[削除失敗]\n{$text}は削除できません。IDを正しく入力してください");
+		} else if ($line != 1) {
+			$sendMessage = new TextMessageBuilder("[エラー]\n{$line}行のレコードが削除されました。想定外のレコードが削除されていないか確認してください");
+		} else {
+			$sendMessage = new TextMessageBuilder("[削除完了]\n{$text}を削除しました");
+			file_put_contents('botStatus.txt', "");
+		}
+
 	}
 
 //CLI
@@ -400,10 +406,15 @@ if ($text == 'あんこう') {
 		} else {
 			$id = $req[2];
 			$chargeDao = new ChargeDao();
-			$chargeDao->delete($id, $squadId);
+			$line = $chargeDao->delete($id, $squadId);
 
-			//TODO 削除できなかったら、メッセージを変える
-			$sendMessage = new TextMessageBuilder("{$id}を削除しました");
+			if ($line == 0) {
+				$sendMessage = new TextMessageBuilder("{$id}は削除できません");
+			} else if ($line != 1) {
+				$sendMessage = new TextMessageBuilder("[エラー]\n{$line}行のレコードが削除されました。想定外のレコードが削除されていないか確認してください");
+			} else {
+				$sendMessage = new TextMessageBuilder("{$id}を削除しました");
+			}
 		}
 
 	// ユーザー追加処理
