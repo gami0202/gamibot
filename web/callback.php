@@ -72,7 +72,7 @@ function illegalArgumentResponse() {
 
 function alreadyJoinedResponse($userId, $users) {
 	$userName = $users->getNameById($userId);
-	return new TextMessageBuilder("あなたはすでに '" . $userName . "' として参加しています");
+	return new TextMessageBuilder("あなたはすでに {$userName} として参加しています");
 }
 
 function notExistUserNameResponse($userName, $users) {
@@ -175,7 +175,7 @@ if ($text == 'あんこう') {
 			array_push($actions, new PostbackTemplateActionBuilder("全員", "action=inputTarget&target=全員"));
 			$index = 1;
 			foreach ($userNames as $userName) {
-				array_push($actions, new PostbackTemplateActionBuilder($userName, "action=inputTarget&target=$userName"));
+				array_push($actions, new PostbackTemplateActionBuilder($userName, "action=inputTarget&target={$userName}"));
 				if ($index++ %3 == 2) { // carousel のアクションは3つまで
 					array_push($columns, new CarouselColumnTemplateBuilder("支払い登録", "たてかえ対象を選んでください", null, $actions));
 					$actions = array();
@@ -200,14 +200,14 @@ if ($text == 'あんこう') {
 	if ($target != '全員' && !isExistUserName($target, $users)) {
 		$sendMessage = notExistUserNameResponse($target, $users);
 	} else {
-		$sendMessage = new TextMessageBuilder("対象: $target\n\n金額を入力してください");
+		$sendMessage = new TextMessageBuilder("金額を入力してください\n(たてかえ対象: {$target})");
 
 		file_put_contents('tmpOwnerId.txt', $userId);
 
 		if ($target == '全員') { // 内部処理では all
 			file_put_contents('tmpTarget.txt', 'all');
 		} else {
-			file_put_contents('tmpTarget.txt', $text);
+			file_put_contents('tmpTarget.txt', $target);
 		}
 		file_put_contents('botStatus.txt', "waiting charge");
 	}
@@ -240,10 +240,10 @@ if ($text == 'あんこう') {
 
 		if ($target == "all") {
 			$sendMessage = new TextMessageBuilder(
-				$ownerName . "さんが全員分として " . $value . "円を立て替えました");
+				"[登録完了]\n"."{$ownerName}さんが全員分として {$value}円を立て替えました");
 		} else {
 			$sendMessage = new TextMessageBuilder(
-				$ownerName . "さんが" . $target . "さんに " . $value . "円を立て替えました");
+				"[登録完了]\n"."{$ownerName}さんが{$target}さんに {$value}円を立て替えました");
 		}
 
 		file_put_contents('botStatus.txt', "");
@@ -252,7 +252,7 @@ if ($text == 'あんこう') {
 
 //// 支払い削除 ////
 } else if ($action == "chargeDelete") {
-	$sendMessage = new TextMessageBuilder("削除するIDを入力してください");
+	$sendMessage = new TextMessageBuilder("[!支払い削除!]\n削除するIDを入力してください");
 	file_put_contents('botStatus.txt', "waiting delete id");
 
 } else if ($botStatus == "waiting delete id") {
@@ -263,7 +263,7 @@ if ($text == 'あんこう') {
 		$chargeDao->delete($text, $squadId);
 
 		//TODO 削除できなかったら、メッセージを変える
-		$sendMessage = new TextMessageBuilder($text . "を削除しました");
+		$sendMessage = new TextMessageBuilder("[削除完了]\n{$text}を削除しました");
 		file_put_contents('botStatus.txt', "");
 	}
 
@@ -301,13 +301,13 @@ if ($text == 'あんこう') {
 			$chargeDao = new ChargeDao();
 			$chargeDao->post($ownerName, $value, $target, $comment, $squadId);
 
-			$sendMessage = new TextMessageBuilder($ownerName . "さんが" . $target . "さんに " . $value . " 円を立て替えました");
+			$sendMessage = new TextMessageBuilder("[登録完了]"."{$ownerName}さんが{$target}さんに {$value}円を立て替えました");
 		}
 
 	// 料金一覧返却
 	} else if ($text == 'bot list' || $action == "botList") {
 		$charges = new ChargeList($squadId);
-		$sendMessage = new TextMessageBuilder($charges->display());
+		$sendMessage = new TextMessageBuilder("[たてかえ一覧]\n".$charges->display());
 
 	// 料金清算処理
 	} else if ($text == 'bot calc' || $action == "botCalc") {
@@ -343,7 +343,7 @@ if ($text == 'あんこう') {
 			}
 		}
 
-		$message = "プラスの人が支払い、マイナスの人が受け取りをして下さい\n"
+		$message = "[精算]\nプラスの人が支払い、マイナスの人が受け取りをして下さい\n"
 									. chargeMapToString($calcCharge);
 
 		//// 支払い例の計算 ////
@@ -403,7 +403,7 @@ if ($text == 'あんこう') {
 			$chargeDao->delete($id, $squadId);
 
 			//TODO 削除できなかったら、メッセージを変える
-			$sendMessage = new TextMessageBuilder($id . "を削除しました");
+			$sendMessage = new TextMessageBuilder("{$id}を削除しました");
 		}
 
 	// ユーザー追加処理
@@ -420,12 +420,12 @@ if ($text == 'あんこう') {
 
 				$users = new UserList($squadId); // post後のものを再取得
 				$sendMessage = new TextMessageBuilder(
-					$userName . "が参加しました\n現在の参加者は\n" . $users->display());
+					"[ユーザ参加]\n {$userName} が参加しました\n現在の参加者は\n" . $users->display());
 		}
 
 	// 参加済みユーザーを一覧表示
 	} else if ($text == 'bot user list' || $action == "botUserList") {
-		$sendMessage = new TextMessageBuilder("現在の参加者は\n" . $users->display());
+		$sendMessage = new TextMessageBuilder("[参加者一覧]\n現在の参加者は\n" . $users->display());
 
 	// データ全削除
 	} else if ($text == 'bot clear') {
