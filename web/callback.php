@@ -14,6 +14,7 @@ use \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder;
 use \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselTemplateBuilder;
 use \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselColumnTemplateBuilder;
 use \LINE\LINEBot\TemplateActionBuilder\MessageTemplateActionBuilder;
+use \LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder;
 
 ////////////////// env /////////////////////
 
@@ -26,9 +27,22 @@ $bot = new LINEBot($httpClient, ['channelSecret' => $secretToken]);
 $json_string = file_get_contents('php://input');
 $jsonObj = json_decode($json_string);
 
-$type = $jsonObj->{"events"}[0]->{"message"}->{"type"};
+$type = $jsonObj->{"events"}[0]->{"type"};
+
+switch ($type) {
+	case "message":
+		$text = $jsonObj->{"events"}[0]->{"message"}->{"text"};
+		break;
+	case "postback":
+		$postback = $jsonObj->{"events"}[0]->{"postback"}->{"data"};
+		parse_str($postback, $data);
+		$action = $data["action"];
+		break;
+	default:
+		exit;
+}
+
 //メッセージ取得
-$text = $jsonObj->{"events"}[0]->{"message"}->{"text"};
 //ReplyToken取得
 $replyToken = $jsonObj->{"events"}[0]->{"replyToken"};
 
@@ -120,23 +134,18 @@ function payExampleToString($map) {
 }
 
 ////////////////// Main /////////////////////
-//メッセージ以外のときは何も返さず終了
-if($type != "text"){
-	exit;
-}
-
 $botStatus = file_get_contents('botStatus.txt');
 
 if ($text == 'あんこう') {
 	$chargeActions = array();
-	array_push($chargeActions, new MessageTemplateActionBuilder("登録", "charge add"));
-	array_push($chargeActions, new MessageTemplateActionBuilder("一覧", "bot list"));
-	array_push($chargeActions, new MessageTemplateActionBuilder("清算", "bot calc"));
+	array_push($chargeActions, new PostbackTemplateActionBuilder("登録", "action=chargeAdd"));
+	array_push($chargeActions, new PostbackTemplateActionBuilder("一覧", "action=botList"));
+	array_push($chargeActions, new PostbackTemplateActionBuilder("清算", "action=botCalc"));
 
 	$userActions = array();
-	array_push($userActions, new MessageTemplateActionBuilder("参加", "bot join"));
-	array_push($userActions, new MessageTemplateActionBuilder("一覧", "bot user list"));
-	array_push($userActions, new MessageTemplateActionBuilder("! 支払い削除 !", "charge delete"));
+	array_push($userActions, new PostbackTemplateActionBuilder("参加", "action=botJoin"));
+	array_push($userActions, new PostbackTemplateActionBuilder("一覧", "action=botUserList"));
+	array_push($userActions, new PostbackTemplateActionBuilder("! 支払い削除 !", "action=chargeDelete"));
 
 	$columns = array();
 	array_push($columns, new CarouselColumnTemplateBuilder("支払い操作", "支払い操作です！", null, $chargeActions));
@@ -150,7 +159,7 @@ if ($text == 'あんこう') {
 	$sendMessage = new TextMessageBuilder('現在の処理をキャンセルしました');
 
 //// 支払い追加処理 ////
-} else if ($text == "charge add") {
+} else if ($action == "chargeAdd") {
 	if (!isAlreadyJoinUser($userId, $users)) {
 		$sendMessage = notJoinedUserResponse();
 	} else {
@@ -244,7 +253,7 @@ if ($text == 'あんこう') {
 
 
 //// 支払い削除 ////
-} else if ($text == "charge delete") {
+} else if ($action == "chargeDelete") {
 	$sendMessage = new TextMessageBuilder("削除するIDを入力してください");
 	file_put_contents('botStatus.txt', "waiting delete id");
 
@@ -298,12 +307,12 @@ if ($text == 'あんこう') {
 		}
 
 	// 料金一覧返却
-	} else if ($text == 'bot list') {
+	} else if ($text == 'bot list' || $action == "botList") {
 		$charges = new ChargeList($squadId);
 		$sendMessage = new TextMessageBuilder($charges->display());
 
 	// 料金清算処理
-	} else if ($text == 'bot calc') {
+	} else if ($text == 'bot calc' || $action == "botCalc") {
 		$charges = new ChargeList($squadId);
 
 		// 全員分の建て替えのみをマップに格納
@@ -400,7 +409,7 @@ if ($text == 'あんこう') {
 		}
 
 	// ユーザー追加処理
-	} else if ($text == 'bot join') {
+	} else if ($text == 'bot join' || $action == "botJoin") {
 			if (isAlreadyJoinUser($userId, $users)) {
 				$sendMessage = alreadyJoinedResponse($userId, $users);
 			} else {
@@ -417,7 +426,7 @@ if ($text == 'あんこう') {
 		}
 
 	// 参加済みユーザーを一覧表示
-	} else if ($text == 'bot user list') {
+	} else if ($text == 'bot user list' || $action == "botUserList") {
 		$sendMessage = new TextMessageBuilder("現在の参加者は\n" . $users->display());
 
 	// データ全削除
