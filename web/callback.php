@@ -35,8 +35,8 @@ switch ($type) {
 		break;
 	case "postback":
 		$postback = $jsonObj->{"events"}[0]->{"postback"}->{"data"};
-		parse_str($postback, $data);
-		$action = $data["action"];
+		parse_str($postback, $postbackData);
+		$action = $postbackData["action"];
 		break;
 	default:
 		exit;
@@ -172,37 +172,35 @@ if ($text == 'あんこう') {
 			$columns = array();
 			$actions = array();
 
-			array_push($actions, new MessageTemplateActionBuilder("全員", "全員"));
+			array_push($actions, new PostbackTemplateActionBuilder("全員", "action=inputTarget&target=全員"));
 			$index = 1;
 			foreach ($userNames as $userName) {
-				array_push($actions, new MessageTemplateActionBuilder($userName, $userName));
+				array_push($actions, new PostbackTemplateActionBuilder($userName, "action=inputTarget&target=$userName"));
 				if ($index++ %3 == 2) { // carousel のアクションは3つまで
-					array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "たてかえ対象を選んでください", null, $actions));
+					array_push($columns, new CarouselColumnTemplateBuilder("支払い登録", "たてかえ対象を選んでください", null, $actions));
 					$actions = array();
 				}
 			}
 
 			if (count($actions) % 3 != 0) {
-				array_push($actions, new MessageTemplateActionBuilder("ダミー", "ダミー"));
+				array_push($actions, new MessageTemplateActionBuilder("ダミー", "これはダミーです。別の対象を選択してください"));
 				if (count($actions) % 3 != 0) {
-					array_push($actions, new MessageTemplateActionBuilder("ダミー", "ダミー"));
+					array_push($actions, new MessageTemplateActionBuilder("ダミー", "これはダミーです。別の対象を選択してください"));
 				}
-				array_push($columns, new CarouselColumnTemplateBuilder("対象一覧", "たてかえ対象を選んでください", null, $actions));
+				array_push($columns, new CarouselColumnTemplateBuilder("支払い登録", "たてかえ対象を選んでください", null, $actions));
 			}
 
 			$carousel = new CarouselTemplateBuilder($columns);
 			$sendMessage = new TemplateMessageBuilder("this is a carousel template", $carousel);
 		}
-
-		file_put_contents('botStatus.txt', "waiting target");
 	}
 
-} else if ($botStatus == "waiting target") {
-	$target = $text;
+} else if ($action == "inputTarget") {
+	$target = $postbackData["target"];
 	if ($target != '全員' && !isExistUserName($target, $users)) {
 		$sendMessage = notExistUserNameResponse($target, $users);
 	} else {
-		$sendMessage = new TextMessageBuilder('金額を入力してください');
+		$sendMessage = new TextMessageBuilder("対象: $target\n\n金額を入力してください");
 
 		file_put_contents('tmpOwnerId.txt', $userId);
 
