@@ -22,39 +22,46 @@ $secretToken = getenv('LINE_CHANNEL_SECRET');
 $httpClient = new CurlHTTPClient($accessToken);
 $bot = new LINEBot($httpClient, ['channelSecret' => $secretToken]);
 
-$testMode = false;
-if ($testMode) {
-	$text = "あんこう";
-	$userId = "a";
+//ユーザーからのメッセージ取得
+$json_string = file_get_contents('php://input');
+$jsonObj = json_decode($json_string);
 
-} else {
-	//ユーザーからのメッセージ取得
-	$json_string = file_get_contents('php://input');
-	$jsonObj = json_decode($json_string);
+$type = $jsonObj->{"events"}[0]->{"message"}->{"type"};
+//メッセージ取得
+$text = $jsonObj->{"events"}[0]->{"message"}->{"text"};
+//ReplyToken取得
+$replyToken = $jsonObj->{"events"}[0]->{"replyToken"};
 
-	$type = $jsonObj->{"events"}[0]->{"message"}->{"type"};
-	//メッセージ取得
-	$text = $jsonObj->{"events"}[0]->{"message"}->{"text"};
-	//ReplyToken取得
-	$replyToken = $jsonObj->{"events"}[0]->{"replyToken"};
+$userId = $jsonObj->{"events"}[0]->{"source"}->{"userId"};
 
-	$userId = $jsonObj->{"events"}[0]->{"source"}->{"userId"};
-	$lineUserName = $jsonObj->{"events"}[0]->{"source"}->{"userName"};
+$squadType = $jsonObj->{"events"}[0]->{"source"}->{"type"};
+switch ($squadType) {
+	case "group":
+		$squadId = $jsonObj->{"events"}[0]->{"source"}->{"groupId"};
+		break;
+	case "room":
+		$squadId = $jsonObj->{"events"}[0]->{"source"}->{"roomId"};
+		break;
+	case "user":
+		$squadId = $userId;
+		break;
+	default:
+		$squadId = $userId;
 }
+
+$users = new UserList($squadId);
 
 ////////////////// Util /////////////////////
 function illegalArgumentResponse() {
 	return new TextMessageBuilder("入力が正しくありません\n'bot'でヘルプが確認できます");
 }
 
-function alreadyJoinedResponse($userId) {
-	$users = new UserList();
+function alreadyJoinedResponse($userId, $users) {
 	$userName = $users->getNameById($userId);
 	return new TextMessageBuilder("あなたはすでに '" . $userName . "' として参加しています");
 }
 
-function notExistUserNameResponse($userName) {
-	$users = new UserList();
+function notExistUserNameResponse($userName, $users) {
 	return new TextMessageBuilder(
 		"指定されたユーザー " . $userName . " が存在しません\n現在の参加者は\n" . $users->display());
 }
@@ -67,29 +74,20 @@ function notNumericResponse() {
 	return new TextMessageBuilder('半角数字を入力してください');
 }
 
-function isAlreadyJoinUser($userId) {
-	$users = new UserList();
+function isAlreadyJoinUser($userId, $users) {
 	$existUserIds = $users->getIdArray();
 	return in_array($userId, $existUserIds);
 }
 
-function isExistUserName($userName) {
-	$users = new UserList();
+function isExistUserName($userName, $users) {
 	$existUserNames = $users->getNameArray();
 	return in_array($userName, $existUserNames);
-}
-
-// userNameが見つからなかったときは、userIdをそのまま返します。
-function getUserNameById($userId) {
-	$users = new UserList();
-	return $users->getNameById($userId);
 }
 
 // ユーザー一覧から、ユーザー名が前方一致したものを返却。
 // 最初にヒットしたものを返す。見つからなければnullを返す。
 //TODO 複数ヒットしたらエラーにできるように
-function getUserNameWithForwardMatch($userNamePart) {
-	$users = new UserList();
+function getUserNameWithForwardMatch($userNamePart, $users) {
 	foreach ($users->userList as $user) {
 		if (startWith($user->name, $userNamePart)) {
 	    return $user->name;
@@ -122,11 +120,9 @@ function payExampleToString($map) {
 }
 
 ////////////////// Main /////////////////////
-if (!$testMode) {
-	//メッセージ以外のときは何も返さず終了
-	if($type != "text"){
-		exit;
-	}
+//メッセージ以外のときは何も返さず終了
+if($type != "text"){
+	exit;
 }
 
 $botStatus = file_get_contents('botStatus.txt');
@@ -155,10 +151,9 @@ if ($text == 'あんこう') {
 
 //// 支払い追加処理 ////
 } else if ($text == "charge add") {
-	if (!isAlreadyJoinUser($userId)) {
+	if (!isAlreadyJoinUser($userId, $users)) {
 		$sendMessage = notJoinedUserResponse();
 	} else {
-		$users = new UserList();
 		$userNames = $users->getNameArray();
 
 		if (count($userNames) > 29) { // carousel は 3*10 までしか表示できない
@@ -195,8 +190,8 @@ if ($text == 'あんこう') {
 
 } else if ($botStatus == "waiting target") {
 	$target = $text;
-	if ($target != '全員' && !isExistUserName($target)) {
-		$sendMessage = notExistUserNameResponse($target);
+	if ($target != '全員' && !isExistUserName($target, $users)) {
+		$sendMessage = notExistUserNameResponse($target, $users);
 	} else {
 		$sendMessage = new TextMessageBuilder('金額を入力してください');
 
@@ -225,16 +220,16 @@ if ($text == 'あんこう') {
 } else if ($botStatus == "waiting comment") {
 	if ($userId != file_get_contents('tmpOwnerId.txt')) {
 		// Nothing to do
-	} else if (!isAlreadyJoinUser($userId)) {
+	} else if (!isAlreadyJoinUser($userId, $users)) {
 		$sendMessage = notJoinedUserResponse();
 	} else {
 		$comment = $text;
-		$ownerName = getUserNameById($userId);
+		$ownerName = $users->getNameById($userId);
 		$target = file_get_contents('tmpTarget.txt');
 		$value = file_get_contents('tmpValue.txt');
 
 		$chargeDao = new ChargeDao();
-		$chargeDao->post($ownerName, $value, $target, $comment);
+		$chargeDao->post($ownerName, $value, $target, $comment, $squadId);
 
 		if ($target == "all") {
 			$sendMessage = new TextMessageBuilder(
@@ -258,8 +253,9 @@ if ($text == 'あんこう') {
 		$sendMessage = notNumericResponse();
 	} else {
 		$chargeDao = new ChargeDao();
-		$chargeDao->delete($text);
+		$chargeDao->delete($text, $squadId);
 
+		//TODO 削除できなかったら、メッセージを変える
 		$sendMessage = new TextMessageBuilder($text . "を削除しました");
 		file_put_contents('botStatus.txt', "");
 	}
@@ -280,36 +276,35 @@ if ($text == 'あんこう') {
 	// 料金追加処理
 	} else if (startWith($text, 'bot add')) {
 		$req = explode(" ", $text);
-		if (!isAlreadyJoinUser($userId)) {
+		if (!isAlreadyJoinUser($userId, $users)) {
 			$sendMessage = notJoinedUserResponse();
 		} else if (count($req) != 5) {
 			$sendMessage = illegalArgumentResponse();
 		} else if (!is_numeric($req[2])) {
 			$sendMessage = illegalArgumentResponse();
-		} else if ($req[3] != 'all' && !isExistUserName($req[3])
-		 	&& getUserNameWithForwardMatch($req[3]) == null) {
-			$sendMessage = notExistUserNameResponse($req[3]);
+		} else if ($req[3] != 'all' && !isExistUserName($req[3], $users)
+		 	&& getUserNameWithForwardMatch($req[3], $users) == null) {
+			$sendMessage = notExistUserNameResponse($req[3], $users);
 		} else {
-			$ownerName = getUserNameById($userId);
+			$ownerName = $users->getNameById($userId);
 			$value = $req[2];
-			$target = getUserNameWithForwardMatch($req[3]);
+			$target = getUserNameWithForwardMatch($req[3], $users);
 			$comment = $req[4];
 
 			$chargeDao = new ChargeDao();
-			$chargeDao->post($ownerName, $value, $target, $comment);
+			$chargeDao->post($ownerName, $value, $target, $comment, $squadId);
 
 			$sendMessage = new TextMessageBuilder($ownerName . "さんが" . $target . "さんに " . $value . " 円を立て替えました");
 		}
 
 	// 料金一覧返却
 	} else if ($text == 'bot list') {
-		$charges = new ChargeList();
+		$charges = new ChargeList($squadId);
 		$sendMessage = new TextMessageBuilder($charges->display());
 
 	// 料金清算処理
 	} else if ($text == 'bot calc') {
-		$charges = new ChargeList();
-		$users = new UserList();
+		$charges = new ChargeList($squadId);
 
 		// 全員分の建て替えのみをマップに格納
 		$chargeMapOnlyToAll = array();
@@ -398,31 +393,31 @@ if ($text == 'あんこう') {
 		} else {
 			$id = $req[2];
 			$chargeDao = new ChargeDao();
-			$chargeDao->delete($id);
+			$chargeDao->delete($id, $squadId);
 
+			//TODO 削除できなかったら、メッセージを変える
 			$sendMessage = new TextMessageBuilder($id . "を削除しました");
 		}
 
 	// ユーザー追加処理
 	} else if ($text == 'bot join') {
-			if (isAlreadyJoinUser($userId)) {
-				$sendMessage = alreadyJoinedResponse($userId);
+			if (isAlreadyJoinUser($userId, $users)) {
+				$sendMessage = alreadyJoinedResponse($userId, $users);
 			} else {
 				$response = $bot->getProfile($userId);
 			  $profile = $response->getJSONDecodedBody();
 			  $userName = $profile['displayName'];
 
 				$userDao = new UserDao();
-				$userDao->post($userId, $userName);
+				$userDao->post($userId, $userName, $squadId);
 
-				$users = new UserList();
+				$users = new UserList($squadId); // post後のものを再取得
 				$sendMessage = new TextMessageBuilder(
 					$userName . "が参加しました\n現在の参加者は\n" . $users->display());
 		}
 
 	// 参加済みユーザーを一覧表示
 	} else if ($text == 'bot user list') {
-		$users = new UserList();
 		$sendMessage = new TextMessageBuilder("現在の参加者は\n" . $users->display());
 
 	// データ全削除

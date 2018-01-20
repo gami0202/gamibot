@@ -3,5 +3,6 @@ CREATE TABLE charges (
   owner character varying,
   value numeric,
   target character varying,
-  comment character varying
+  comment character varying,
+	squad_id character varying
 );

@@ -12,11 +12,11 @@ class UserDao
     $this->password = getenv('DBPASS');
   }
 
-  function get() {
+  function get($squadId) {
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
 
-      $sql = "SELECT * FROM users";
+      $sql = "SELECT * FROM users WHERE squad_id='".$squadId."'";
       $stmt = $dbh->query($sql);
       return $stmt;
 
@@ -27,13 +27,14 @@ class UserDao
     }
   }
 
-  function post($userId, $userName) {
+  function post($userId, $userName, $squadId) {
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
 
-      $sql = "INSERT INTO users (user_id, user_name) VALUES ("
+      $sql = "INSERT INTO users (user_id, user_name, squad_id) VALUES ("
             . "'" . $userId . "', "
-            . "'" . $userName . "'"
+            . "'" . $userName . "', "
+            . "'" . $squadId . "'"
             .")";
       $stmt = $dbh->query($sql);
 

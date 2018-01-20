@@ -12,11 +12,11 @@ class ChargeDao
     $this->password = getenv('DBPASS');
   }
 
-  function get() {
+  function get($squadId) {
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
 
-      $sql = "SELECT * FROM charges";
+      $sql = "SELECT * FROM charges WHERE squad_id='".$squadId."'";
       $stmt = $dbh->query($sql);
       return $stmt;
 
@@ -27,15 +27,16 @@ class ChargeDao
     }
   }
 
-  function post($owner, $value, $target, $comment) {
+  function post($owner, $value, $target, $comment, $squadId) {
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
 
-      $sql = "INSERT INTO charges (owner, value, target, comment) VALUES ("
+      $sql = "INSERT INTO charges (owner, value, target, comment, squad_id) VALUES ("
             . "'" . $owner . "', "
             . "'" . $value . "', "
             . "'" . $target . "', "
-            . "'" . $comment . "'"
+            . "'" . $comment . "', "
+            . "'" . $squadId . "'"
             .")";
       $stmt = $dbh->query($sql);
 
@@ -46,11 +47,11 @@ class ChargeDao
     }
   }
 
-  function delete($id) {
+  function delete($id, $squadId) {
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
 
-      $sql = "DELETE FROM charges WHERE id=" . $id;
+      $sql = "DELETE FROM charges WHERE id=" . $id . " AND squad_id='" . $squadId . "'";
       $stmt = $dbh->query($sql);
 
     } catch (PDOException $e) {

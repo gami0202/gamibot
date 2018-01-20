@@ -7,9 +7,9 @@ class ChargeList
   public $chargeList = array();
 
   // DBのデータをChargeクラスのリストにロード
-  function __construct() {
+  function __construct($squadId) {
     $chargeDao = new ChargeDao();
-    $dbCharges = $chargeDao->get();
+    $dbCharges = $chargeDao->get($squadId);
     $this->chargeList = $this->parce($dbCharges);
   }
 

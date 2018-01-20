@@ -7,9 +7,9 @@ class UserList
   public $userList = array();
 
   // DBのデータをChargeクラスのリストにロード
-  function __construct() {
+  function __construct($squadId) {
     $userDao = new UserDao();
-    $dbUsers = $userDao->get();
+    $dbUsers = $userDao->get($squadId);
     $this->userList = $this->parce($dbUsers);
   }
 
