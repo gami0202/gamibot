@@ -60,7 +60,7 @@ switch ($squadType) {
 		$squadId = $userId;
 		break;
 	default:
-		$squadId = $userId;
+		exit;
 }
 
 $users = new UserList($squadId);
@@ -131,6 +131,23 @@ function payExampleToString($map) {
 		}
 	}
 	return $string;
+}
+
+function getMemberProfile($bot, $userId, $squadType, $squadId) {
+	switch($squadType) {
+		case "group":
+			$response = $bot->getGroupMemberProfile($squadId, $userId);
+			break;
+		case "room":
+			$response = $bot->getRoomMemberProfile($squadId, $userId);
+			break;
+		case "user":
+			$response = $bot->getProfile($userId);
+			break;
+		default:
+			exit;
+	}
+	return $response->getJSONDecodedBody();
 }
 
 ////////////////// Main /////////////////////
@@ -422,9 +439,30 @@ if ($text == 'あんこう') {
 			if (isAlreadyJoinUser($userId, $users)) {
 				$sendMessage = alreadyJoinedResponse($userId, $users);
 			} else {
-				$response = $bot->getProfile($userId);
-			  $profile = $response->getJSONDecodedBody();
-			  $userName = $profile['displayName'];
+			  $userProfile = getMemberProfile($bot, $userId, $squadType, $squadId);
+			  $userName = $userProfile['displayName'];
+
+				if ($userName == null || $userName == "") {
+					$sendMessage = new TextMessageBuilder("ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>");
+
+				} else {
+					$userDao = new UserDao();
+					$userDao->post($userId, $userName, $squadId);
+
+					$users = new UserList($squadId); // post後のものを再取得
+					$sendMessage = new TextMessageBuilder(
+						"[ユーザ参加]\n {$userName} が参加しました\n現在の参加者は\n" . $users->display());
+				}
+		}
+
+	} else if (startWith($text, 'bot join')) {
+			$req = explode(" ", $text);
+			if (isAlreadyJoinUser($userId, $users)) {
+				$sendMessage = alreadyJoinedResponse($userId, $users);
+			} else if (count($req) != 3) {
+				$sendMessage = illegalArgumentResponse();
+			} else {
+				$userName = $req[2];
 
 				$userDao = new UserDao();
 				$userDao->post($userId, $userName, $squadId);
@@ -432,7 +470,7 @@ if ($text == 'あんこう') {
 				$users = new UserList($squadId); // post後のものを再取得
 				$sendMessage = new TextMessageBuilder(
 					"[ユーザ参加]\n {$userName} が参加しました\n現在の参加者は\n" . $users->display());
-		}
+			}
 
 	// 参加済みユーザーを一覧表示
 	} else if ($text == 'bot user list' || $action == "botUserList") {
