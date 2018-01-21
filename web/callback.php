@@ -102,6 +102,10 @@ function isExistUserName($userName, $users) {
 // 最初にヒットしたものを返す。見つからなければnullを返す。
 //TODO 複数ヒットしたらエラーにできるように
 function getUserNameWithForwardMatch($userNamePart, $users) {
+	if ($userNamePart == "all") {
+		return "all";
+	}
+	
 	foreach ($users->userList as $user) {
 		if (startWith($user->name, $userNamePart)) {
 	    return $user->name;
