@@ -438,15 +438,24 @@ if ($text == 'あんこう') {
 	} else if ($text == 'bot user list' || $action == "botUserList") {
 		$sendMessage = new TextMessageBuilder("[参加者一覧]\n現在の参加者は\n" . $users->display());
 
-	// データ全削除
 	} else if ($text == 'bot clear') {
+		$chargeDao = new ChargeDao();
+		$userDao = new UserDao();
+
+		$chargeDao->deleteAllBySquadId($squadId);
+		$userDao->deleteAllBySquadId($squadId);
+
+		$sendMessage = new TextMessageBuilder("記録された情報をすべて削除しました");
+
+	// データ全削除
+	} else if ($text == 'bot destory') {
 		$chargeDao = new ChargeDao();
 		$userDao = new UserDao();
 
 		$chargeDao->deleteAll();
 		$userDao->deleteAll();
 
-		$sendMessage = new TextMessageBuilder("記録された情報をすべて削除しました");
+		$sendMessage = new TextMessageBuilder("bot内の全データを削除しました");
 
 	//Joke
 	} else if (strpos($text, "ガルパン") !== false) {

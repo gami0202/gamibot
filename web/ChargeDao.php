@@ -62,6 +62,20 @@ class ChargeDao
     return $line;
   }
 
+  function deleteAllBySquadId($squadId) {
+    try {
+      $dbh = new PDO($this->dsn, $this->user, $this->password);
+
+      $sql = "DELETE FROM charges WHERE squad_id='{$squadId}'";
+      $line = $dbh->query($sql);
+
+    } catch (PDOException $e) {
+      echo 'データベースにアクセスできません！' . $e->getMessage();
+    } finally {
+      $dbh = null; //close
+    }
+  }
+
   function deleteAll() {
     try {
       $dbh = new PDO($this->dsn, $this->user, $this->password);
