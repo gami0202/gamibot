@@ -15,6 +15,7 @@ use \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselTemplateBuilder;
 use \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselColumnTemplateBuilder;
 use \LINE\LINEBot\TemplateActionBuilder\MessageTemplateActionBuilder;
 use \LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder;
+use \LINE\LINEBot\Event\LeaveEvent;
 
 ////////////////// env /////////////////////
 
@@ -480,6 +481,31 @@ if ($text == 'あんこう') {
 	} else if ($text == 'bot user list' || $action == "botUserList") {
 		$sendMessage = new TextMessageBuilder("[参加者一覧]\n現在の参加者は\n" . $users->display());
 
+	} else if ($text == "bot leave") {
+		
+		$chargeDao = new ChargeDao();
+		$userDao = new UserDao();
+
+		$chargeDao->deleteAllBySquadId($squadId);
+		$userDao->deleteAllBySquadId($squadId);
+
+		switch ($squadType) {
+			case "group":
+				$squadId = $jsonObj->{"events"}[0]->{"source"}->{"groupId"};
+				$bot->leaveGroup($squadId);
+				break;
+			case "room":
+				$squadId = $jsonObj->{"events"}[0]->{"source"}->{"roomId"};
+				$bot->leaveRoom($squadId);
+				break;
+			case "user":
+				$sendMessage = new TextMessageBuilder("退出はグループ/ルームのみ可能です。");
+				break;
+			default:
+				exit;
+		}
+
+		// $sendMessage = new TextMessageBuilder("記録された情報をすべて削除しました\nご用のときは、また招待してください！");
 	} else if ($text == 'bot clear') {
 		$chargeDao = new ChargeDao();
 		$userDao = new UserDao();
