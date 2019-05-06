@@ -180,6 +180,9 @@ if ($text == 'あんこう') {
 	file_put_contents('botStatus.txt', "");
 	$sendMessage = new TextMessageBuilder('現在の処理をキャンセルしました');
 
+} else if ($text == "ヘルプ") {
+	$sendMessage = new TextMessageBuilder('[ヘルプ]\n https://github.com/gami0202/gamibot/blob/master/README.md');
+	
 //// 支払い追加処理 ////
 } else if ($action == "chargeAdd") {
 	if (!isAlreadyJoinUser($userId, $users)) {
