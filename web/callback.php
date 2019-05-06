@@ -515,16 +515,6 @@ if ($text == 'あんこう') {
 
 		$sendMessage = new TextMessageBuilder("記録された情報をすべて削除しました");
 
-	// データ全削除
-	} else if ($text == 'bot destory') {
-		$chargeDao = new ChargeDao();
-		$userDao = new UserDao();
-
-		$chargeDao->deleteAll();
-		$userDao->deleteAll();
-
-		$sendMessage = new TextMessageBuilder("bot内の全データを削除しました");
-
 	//Joke
 	} else if (strpos($text, "ガルパン") !== false) {
 		$sendMessage = new TextMessageBuilder("ガルパンはいいぞ");
