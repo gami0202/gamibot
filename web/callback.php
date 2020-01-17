@@ -481,6 +481,7 @@ if ($text == 'あんこう') {
 	} else if ($text == 'bot user list' || $action == "botUserList") {
 		$sendMessage = new TextMessageBuilder("[参加者一覧]\n現在の参加者は\n" . $users->display());
 
+	// グループ/ルームに記録された情報をすべて削除して、退出する
 	} else if ($text == "bot leave") {
 		
 		$chargeDao = new ChargeDao();
@@ -505,7 +506,6 @@ if ($text == 'あんこう') {
 				exit;
 		}
 
-		// $sendMessage = new TextMessageBuilder("記録された情報をすべて削除しました\nご用のときは、また招待してください！");
 	} else if ($text == 'bot clear') {
 		$chargeDao = new ChargeDao();
 		$userDao = new UserDao();
