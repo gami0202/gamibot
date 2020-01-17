@@ -167,11 +167,17 @@ if ($text == 'あんこう') {
 	$userActions = array();
 	array_push($userActions, new PostbackTemplateActionBuilder("参加", "action=botJoin"));
 	array_push($userActions, new PostbackTemplateActionBuilder("一覧", "action=botUserList"));
-	array_push($userActions, new PostbackTemplateActionBuilder("! 支払い削除 !", "action=chargeDelete"));
+	array_push($userActions, new PostbackTemplateActionBuilder("ダミー", "これはダミーです"));
+
+	$chargeActions2 = array();
+	array_push($chargeActions2, new PostbackTemplateActionBuilder("立替された合計額", "action=botSum"));
+	array_push($chargeActions2, new PostbackTemplateActionBuilder("! 支払い削除 !", "action=chargeDelete"));
+	array_push($chargeActions2, new PostbackTemplateActionBuilder("ダミー", "これはダミーです"));
 
 	$columns = array();
 	array_push($columns, new CarouselColumnTemplateBuilder("支払い操作", "支払い操作です！", null, $chargeActions));
 	array_push($columns, new CarouselColumnTemplateBuilder("ユーザー操作", "ユーザー操作です！", null, $userActions));
+	array_push($columns, new CarouselColumnTemplateBuilder("支払い操作(追加機能)", "支払い操作(追加機能)です！", null, $chargeActions2));
 
 	$carousel = new CarouselTemplateBuilder($columns);
 	$sendMessage = new TemplateMessageBuilder("this is a carousel template", $carousel);
@@ -309,7 +315,8 @@ if ($text == 'あんこう') {
 							. "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
 							. "〇支払一覧:\n  bot list\n"
 							. "〇支払清算:\n  bot calc\n"
-							. "〇支払削除:\n  bot delete <id>");
+							. "〇支払削除:\n  bot delete <id>\n"
+							. "〇被立替額確認:\n  bot sum");
 
 	// 料金追加処理
 	} else if (startWith($text, 'bot add')) {
@@ -344,7 +351,7 @@ if ($text == 'あんこう') {
 	} else if ($text == 'bot calc' || $action == "botCalc") {
 		$charges = new ChargeList($squadId);
 
-		// 全員分の建て替えのみをマップに格納
+		// 全員宛のみをマップに格納
 		$chargeMapOnlyToAll = array();
 		foreach ($charges->chargeList as $charge) {
 			if ($charge->target == 'all') {
@@ -352,21 +359,21 @@ if ($text == 'あんこう') {
 			}
 		}
 
-		// 全員分の建て替えの一人当たりの支払い額を算出
+		// 全員宛の一人当たり支払い額を算出
 		$totalCharge = 0;
 		foreach ($chargeMapOnlyToAll as $_owner => $charge) {
 			$totalCharge += $charge;
 		}
 		$chargeAverage = $totalCharge / $users->userNum();
 
-		// ユーザー分のマップを作成し、全員分の建て替えに対する支払額を格納
+		// ユーザー分のマップを作成し、全員宛の一人当たり支払い額を格納
 		$calcCharge	= array();
 		foreach ($users->userList as $user) {
 			$charge = $chargeAverage - $chargeMapOnlyToAll[$user->name];
 			$calcCharge += array($user->name => $charge);
 		}
 
-		// 各ユーザーの支払い金額を作成
+		// 各ユーザー宛の支払い金額を作成
 		foreach ($charges->chargeList as $charge) {
 			if ($charge->target != 'all') {
 				$calcCharge[$charge->owner] -= $charge->charge;
@@ -419,6 +426,35 @@ if ($text == 'あんこう') {
 		$message = $message . "\n"
 			. "支払い例\n" . payExampleToString($payExample);
 
+		$sendMessage = new TextMessageBuilder($message);
+
+	// ユーザー別の支払い額合計処理
+	} else if ($text == 'bot sum' || $action == "botSum") {
+		$charges = new ChargeList($squadId);
+
+		// 全員宛の一人当たり支払い額を算出
+		$totalCharge = 0;
+		foreach ($charges->chargeList as $charge) {
+			if ($charge->target == 'all') {
+				$totalCharge += $charge->charge;
+			}
+		}
+		$chargeAverage = $totalCharge / $users->userNum();
+
+		// ユーザー分のマップを作成し、全員宛の一人当たり支払い額を格納
+		$calcCharge	= array();
+		foreach ($users->userList as $user) {
+			$calcCharge += array($user->name => $chargeAverage);
+		}
+
+		// 各ユーザー宛の支払い額を加算
+		foreach ($charges->chargeList as $charge) {
+			if ($charge->target != 'all') {
+				$calcCharge[$charge->target] += $charge->charge;
+			}
+		}
+
+		$message = "[立替された合計額]\n" . chargeMapToString($calcCharge);
 		$sendMessage = new TextMessageBuilder($message);
 
 	// 支払い削除処理
