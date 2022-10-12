@@ -1,47 +1,22 @@
-# 概要
+# Laravel 5.8 with a Docker PHP Image
 
-このボットは、友人と旅行時の立て替え清算を想定して作られています。
+A demo repo for deploying a Laravel PHP application on [Render](https://render.com) using Docker. You can follow the getting started tutorial [here](https://render.com/docs/deploy-php-laravel-docker).
 
-駐車場代などの立替発生後、すぐにこのボットに金額を入力しておきます。  
-これだけで、後で忘れずにかつ簡単に清算ができます。
 
-（※旅行以外にも活用可）
+## Deployment
 
-## 背景
+1. [Create](https://dashboard.render.com/new/database) a new PostgreSQL database on Render and copy the internal DB URL to use below.
 
-旅行時は、駐車場代やチケットのまとめ買いなど、全員分の支払いを誰かが立て替えるシーンが発生します。  
-これらのレシートをすべて取っておいて、旅行最終日に清算するのは面倒です。細かい清算忘れも起こりえます。  
-そんな時にこのボットを使ってください。
+2. Fork this repo to your own GitHub account.
 
-# 基本的な使い方
+3. Create a new **Web Service** on Render, and give Render's GitHub app permission to access your new repo.
 
-1. ボットをlineグループに追加
+4. Select `Docker` for the environment, and add the following environment variable under the *Advanced* section:
 
-1. ボットのトップページを表示  
-`あんこう` とメッセージ送信。ここからボットの操作をします。
+   | Key             | Value           |
+   | --------------- | --------------- |
+   | `DATABASE_URL`  | The **internal connection string** for the database you created above. |
+   | `DB_CONNECTION`  | `pgsql` |
+   | `APP_KEY`  | Copy the output of `php artisan key:generate --show` |
 
-1. 全員がユーザーとして参加  
-各自が `参加` をタップ。
-
-1. 立替登録  
-`登録` をタップ。その後ボットからの応答に従って入力。
-
-1. 精算確認  
-`清算` をタップ。
-
-その他の機能は、実際にいじってみてください。
-
-# トラブルシューティング
-
-1. 立替登録などの操作を中断したい場合  
-`キャンセル` とメッセージ送信。
-
-1. バグなどで操作がうまくいかず、一度すべてリセットしたい場合  
-`bot clear` とメッセージ送信。ただし、このボットに登録された立替情報・ユーザー情報がすべて削除されるので、注意してください。
-
-# [立替された合計額]機能について
-
-誰かに立替してもらった額の合計をユーザー別に表示します。  
-
-この機能を活用することで、旅行にかかった費用がわかります。
-※全費用を確認するには、自分で支払った金額も自分宛てに立替登録してください。
+That's it! Your Laravel 5.8 app will be live on your Render URL as soon as the build finishes. You can test it out by registering and logging in.

@@ -1,8 +1,0 @@
-CREATE TABLE charges (
-	id serial,
-  owner character varying,
-  value numeric,
-  target character varying,
-  comment character varying,
-	squad_id character varying
-);
