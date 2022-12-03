@@ -1,0 +1,27 @@
+services:
+- type: web
+  name: line-bot-ruby-echo
+  env: ruby
+  repo: https://github.com/line/line-bot-sdk-ruby.git
+  buildCommand: cd examples/echobot;BUNDLE_DEPLOYMENT=false bundle install
+  startCommand: cd examples/echobot;bundle exec ruby app.rb
+  plan: free
+  autoDeploy: false
+  envVars:
+  - key: LINE_CHANNEL_TOKEN
+    sync: false
+  - key: LINE_CHANNEL_SECRET
+    sync: false
+# - type: web
+#   name: line-bot-ruby-kitchensink
+#   env: ruby
+#   repo: https://github.com/line/line-bot-sdk-ruby.git
+#   buildCommand: cd examples/kitchensink;gem install sinatra line-bot-api
+#   startCommand: cd examples/kitchensink;ruby app.rb
+#   plan: free
+#   autoDeploy: false
+#   envVars:
+#   - key: LINE_CHANNEL_TOKEN
+#     sync: false
+#   - key: LINE_CHANNEL_SECRET
+#     sync: false
