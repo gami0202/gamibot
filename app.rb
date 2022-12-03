@@ -8,75 +8,6 @@ def client
   }
 end
 
-# def carousel
-# {
-#   "type": "template",   # 必須
-#   "altText": "this is a carousel template",   # 必須
-#   "template": {         # 必須
-#       "type": "carousel",  # 必須
-#       "columns": [      # 必須
-#           # 1つ目のカラム
-#           {
-#             "title": "支払い操作",
-#             "text": "支払い操作です！",   # 必須
-#             "actions": [    # 必須
-#                 # 1つ目のボタン(カラム1)
-#                 {
-#                     "type": "postback",
-#                     "label": "登録",
-#                     "data": "action=chargeAdd"
-#                 },
-#                 # 2つ目のボタン(カラム1)
-#                 {
-#                     "type": "postback",
-#                     "label": "一覧",
-#                     "data": "action=botList"
-#                 },
-#                 # 3つ目のボタン(カラム1)
-#                 {
-#                     "type": "postback",
-#                     "label": "清算",
-#                     "data": "action=botCalc"
-#                 }
-#             ]
-#           }
-#     #       # 2つ目のカラム
-#     #       {
-#     #         "thumbnailImageUrl": "https://example.com/bot/images/item2.jpg",
-#     #         "imageBackgroundColor": "#000000",
-#     #         "title": "this is menu",
-#     #         "text": "description",   # 必須
-#     #         "defaultAction": {
-#     #             "type": "uri",
-#     #             "label": "View detail",
-#     #             "uri": "http://example.com/page/222"
-#     #         },
-#     #         "actions": [   # 必須
-#     #             # 1つ目のボタン(カラム2)
-#     #             {
-#     #                 "type": "postback",
-#     #                 "label": "Buy",
-#     #                 "data": "action=buy&itemid=222"
-#     #             },
-#     #             # 2つ目のボタン(カラム2)
-#     #             {
-#     #                 "type": "postback",
-#     #                 "label": "Add to cart",
-#     #                 "data": "action=add&itemid=222"
-#     #             },
-#     #             # 3つ目のボタン(カラム2)
-#     #             {
-#     #                 "type": "uri",
-#     #                 "label": "View detail",
-#     #                 "uri": "http://example.com/page/222"
-#     #             }
-#     #         ]
-#     #       }
-#       ]
-#   }
-# }
-# end
-
 def carousel
     {
         "type": "template",
@@ -84,68 +15,143 @@ def carousel
         "template": {
             "type": "carousel",
             "columns": [
-            {
-                "thumbnailImageUrl": "https://example.com/bot/images/item1.jpg",
-                "imageBackgroundColor": "#FFFFFF",
-                "title": "this is menu",
-                "text": "description",
-                "defaultAction": {
-                "type": "uri",
-                "label": "View detail",
-                "uri": "http://example.com/page/123"
-                },
-                "actions": [
                 {
-                    "type": "postback",
-                    "label": "Buy",
-                    "data": "action=buy&itemid=111"
+                    "title": "支払い操作",
+                    "text": "支払い操作です！",
+                    "actions": [
+                        {
+                            "type": "postback",
+                            "label": "登録",
+                            "data": "action=chargeAdd"
+                        },
+                        {
+                            "type": "postback",
+                            "label": "一覧",
+                            "data": "action=botList"
+                        },
+                        {
+                            "type": "postback",
+                            "label": "清算",
+                            "data": "action=botCalc"
+                        }
+                    ]
                 },
                 {
-                    "type": "postback",
-                    "label": "Add to cart",
-                    "data": "action=add&itemid=111"
+                    "title": "ユーザー操作",
+                    "text": "ユーザー操作です！",
+                    "actions": [
+                        {
+                            "type": "postback",
+                            "label": "参加",
+                            "data": "action=botJoin"
+                        },
+                        {
+                            "type": "postback",
+                            "label": "一覧",
+                            "data": "action=botUserList"
+                        },
+                        {
+                            "type": "postback",
+                            "label": "ダミー",
+                            "data": "これはダミーです"
+                        }
+                    ]
                 },
                 {
-                    "type": "uri",
-                    "label": "View detail",
-                    "uri": "http://example.com/page/111"
+                    "title": "支払い操作(追加機能)",
+                    "text": "支払い操作(追加機能)です！",
+                    "actions": [
+                        {
+                            "type": "postback",
+                            "label": "立替された合計額",
+                            "data": "action=botSum"
+                        },
+                        {
+                            "type": "postback",
+                            "label": "! 支払い削除 !",
+                            "data": "action=chargeDelete"
+                        },
+                        {
+                            "type": "postback",
+                            "label": "ダミー",
+                            "data": "これはダミーです"
+                        }
+                    ]
                 }
-                ]
-            },
-            {
-                "thumbnailImageUrl": "https://example.com/bot/images/item2.jpg",
-                "imageBackgroundColor": "#000000",
-                "title": "this is menu",
-                "text": "description",
-                "defaultAction": {
-                "type": "uri",
-                "label": "View detail",
-                "uri": "http://example.com/page/222"
-                },
-                "actions": [
-                {
-                    "type": "postback",
-                    "label": "Buy",
-                    "data": "action=buy&itemid=222"
-                },
-                {
-                    "type": "postback",
-                    "label": "Add to cart",
-                    "data": "action=add&itemid=222"
-                },
-                {
-                    "type": "uri",
-                    "label": "View detail",
-                    "uri": "http://example.com/page/222"
-                }
-                ]
-            }
-            ],
-            "imageAspectRatio": "rectangle",
-            "imageSize": "cover"
+            ]
         }
     }
 end
+
+# def carousel
+#     {
+#         "type": "template",
+#         "altText": "this is a carousel template",
+#         "template": {
+#             "type": "carousel",
+#             "columns": [
+#             {
+#                 "thumbnailImageUrl": "https://example.com/bot/images/item1.jpg",
+#                 "imageBackgroundColor": "#FFFFFF",
+#                 "title": "this is menu",
+#                 "text": "description",
+#                 "defaultAction": {
+#                 "type": "uri",
+#                 "label": "View detail",
+#                 "uri": "http://example.com/page/123"
+#                 },
+#                 "actions": [
+#                 {
+#                     "type": "postback",
+#                     "label": "Buy",
+#                     "data": "action=buy&itemid=111"
+#                 },
+#                 {
+#                     "type": "postback",
+#                     "label": "Add to cart",
+#                     "data": "action=add&itemid=111"
+#                 },
+#                 {
+#                     "type": "uri",
+#                     "label": "View detail",
+#                     "uri": "http://example.com/page/111"
+#                 }
+#                 ]
+#             },
+#             {
+#                 "thumbnailImageUrl": "https://example.com/bot/images/item2.jpg",
+#                 "imageBackgroundColor": "#000000",
+#                 "title": "this is menu",
+#                 "text": "description",
+#                 "defaultAction": {
+#                 "type": "uri",
+#                 "label": "View detail",
+#                 "uri": "http://example.com/page/222"
+#                 },
+#                 "actions": [
+#                 {
+#                     "type": "postback",
+#                     "label": "Buy",
+#                     "data": "action=buy&itemid=222"
+#                 },
+#                 {
+#                     "type": "postback",
+#                     "label": "Add to cart",
+#                     "data": "action=add&itemid=222"
+#                 },
+#                 {
+#                     "type": "uri",
+#                     "label": "View detail",
+#                     "uri": "http://example.com/page/222"
+#                 }
+#                 ]
+#             }
+#             ],
+#             "imageAspectRatio": "rectangle",
+#             "imageSize": "cover"
+#         }
+#     }
+# end
 
 post '/callback' do
   body = request.body.read
