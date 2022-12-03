@@ -1,6 +1,0 @@
-CREATE TABLE users (
-	id serial,
-  user_id character varying,
-  user_name character varying,
-	squad_id character varying
-);
