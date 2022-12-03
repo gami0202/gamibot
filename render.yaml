@@ -1,12 +1,13 @@
 services:
 - type: web
-  name: line-bot-ruby-echo
+  name: gami-linebot-ruby
   env: ruby
   repo: https://github.com/gami0202/gamibot.git
+  region: singapore
   buildCommand: BUNDLE_DEPLOYMENT=false bundle install
   startCommand: bundle exec ruby app.rb
   plan: free
-  autoDeploy: false
+  autoDeploy: true
   envVars:
   - key: LINE_CHANNEL_TOKEN
     sync: false
