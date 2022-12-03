@@ -2,9 +2,9 @@ services:
 - type: web
   name: line-bot-ruby-echo
   env: ruby
-  repo: https://github.com/line/line-bot-sdk-ruby.git
-  buildCommand: cd examples/echobot;BUNDLE_DEPLOYMENT=false bundle install
-  startCommand: cd examples/echobot;bundle exec ruby app.rb
+  repo: https://github.com/gami0202/gamibot.git
+  buildCommand: BUNDLE_DEPLOYMENT=false bundle install
+  startCommand: bundle exec ruby app.rb
   plan: free
   autoDeploy: false
   envVars:
