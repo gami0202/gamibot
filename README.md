@@ -1,5 +1,3 @@
-[![Deploy to Render](http://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-
 # 概要
 
 このボットは、友人と旅行時の立て替え清算を想定して作られています。
