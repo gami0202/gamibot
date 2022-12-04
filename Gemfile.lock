@@ -15,6 +15,7 @@ GEM
       rack-protection (= 3.0.4)
       tilt (~> 2.0)
     tilt (2.0.11)
+    uri (0.11.0)
 
 PLATFORMS
   ruby
@@ -23,6 +24,7 @@ DEPENDENCIES
   line-bot-api
   pg
   sinatra
+  uri
 
 BUNDLED WITH
    2.1.4
