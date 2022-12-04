@@ -6,7 +6,7 @@ def client
   @client ||= Line::Bot::Client.new { |config|
     config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
     config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
-    config.endpoint = "http://localhost:8080"
+    config.endpoint = ENV["ENDPOINT"] || Line::Bot::API::DEFAULT_ENDPOINT
   }
 end
 
@@ -55,4 +55,6 @@ post '/callback' do
       end
     end
   end
+
+  "OK"
 end
