@@ -123,14 +123,14 @@ post '/callback' do
         end
       # end
     when Line::Bot::Event::Postback
-      # if URI::decode_www_form(event.postback['data'])["action"] == "chargeAdd"
-        p body
+      postback_hash = Hash[URI::decode_www_form(event['postback']['data'])]
+      if postback_hash["action"] == "chargeAdd"
         message = {
           type: 'text',
           text: event['postback']['data']
         }
         client.reply_message(event['replyToken'], message)
-      # end
+      end
     end
   end
 
