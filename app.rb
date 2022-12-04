@@ -6,7 +6,7 @@ def client
   @client ||= Line::Bot::Client.new { |config|
     config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
     config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
-    # config.endpoint = "http://localhost:8080"
+    config.endpoint = "http://localhost:8080"
   }
 end
 
@@ -27,6 +27,24 @@ post '/callback' do
       when Line::Bot::Event::MessageType::Text
         if event.message["text"] == "あんこう"
             client.reply_message(event['replyToken'], carousel)
+
+        elsif event.message["text"] == "キャンセル"
+            File.open("botStatus.txt", mode = "w"){|f|
+              f.write("")
+            }
+
+            message = {
+              type: 'text',
+              text: "現在の処理をキャンセルしました"
+            }
+            client.reply_message(event['replyToken'], message)
+        elsif event.message["text"] == "ヘルプ"
+          message = {
+            type: 'text',
+            text: "[ヘルプ]\n https://github.com/gami0202/gamibot/blob/master/README.md"
+          }
+          client.reply_message(event['replyToken'], message)
+	
         end
       # when Line::Bot::Event::Postback
       #   message = {

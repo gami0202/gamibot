@@ -4,6 +4,7 @@ GEM
     line-bot-api (1.26.0)
     mustermann (3.0.0)
       ruby2_keywords (~> 0.0.1)
+    pg (1.4.5)
     rack (2.2.4)
     rack-protection (3.0.4)
       rack
@@ -20,6 +21,7 @@ PLATFORMS
 
 DEPENDENCIES
   line-bot-api
+  pg
   sinatra
 
 BUNDLED WITH
