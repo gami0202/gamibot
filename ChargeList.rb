@@ -1,6 +1,8 @@
 require_relative './Charge'
 
 class ChargeList
+    attr_reader :chargeList
+
     def initialize(chargeList)
         @chargeList = chargeList
     end

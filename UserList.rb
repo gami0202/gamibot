@@ -1,6 +1,8 @@
 require_relative './User'
 
 class UserList
+    attr_reader :userList
+
     def initialize(userList)
         @userList = userList
     end

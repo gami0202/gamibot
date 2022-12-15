@@ -1,4 +1,6 @@
 class Charge
+    attr_reader :id, :owner, :charge, :target, :comment
+
     def initialize(id, owner, charge, target, comment)
         @id = id
         @owner = owner
