@@ -245,6 +245,48 @@ post '/callback' do
             text: messageText
           }
           client.reply_message(event['replyToken'], message)
+        
+        elsif event.message["text"] == 'bot sum'
+          # TODO
+
+        elsif event.message["text"].start_with?("bot delete")
+          # TODO
+
+        elsif event.message["text"] == 'bot join'
+          if users.isAlreadyJoinUser(userId)
+            userName = users.getNameById(userId)
+            message = 
+            {
+                type: 'text',
+                text: "あなたはすでに #{userName} として参加しています"
+            }
+            client.reply_message(event['replyToken'], message)
+
+          else
+            userProfile = getMemberProfile(bot, userId, $squadType, $squadId);
+            userName = userProfile['displayName'];
+    
+            if userName == null || $userName == ""
+              message = 
+              {
+                  type: 'text',
+                  text: "ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>"
+              }
+              client.reply_message(event['replyToken'], message)
+    
+            else
+              $userDao = UserDao,new.post(userId, userName, squadId)
+              users = UserDao.new.get(squadId) # post後のものを再取得
+              message = 
+              {
+                  type: 'text',
+                  text: "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{$users.display}"
+              }
+              client.reply_message(event['replyToken'], message)
+            end
+          end
+    
+
         end
       # end
     when Line::Bot::Event::Postback
