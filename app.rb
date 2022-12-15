@@ -63,7 +63,7 @@ def chargeAdd(event, client)
   userId = event['source']['userId']
   users = UserDao.new.get(getSquadId(event))
 
-  if !isAlreadyJoin(userId, users)
+  if !users.isAlreadyJoin(userId)
     client.reply_message(event['replyToken'], Messages.new.notJoinedUser) 
   else
     userNames = users.getNameArray
@@ -137,7 +137,7 @@ post '/callback' do
 
         elsif event.message["text"].start_with?("bot add")
           req = event.message["text"].split
-          if !isAlreadyJoin(userId, users)
+          if !users.isAlreadyJoin(userId)
             message = {
               type: 'text',
               text: 'あなたはユーザーとして参加していません'
@@ -275,9 +275,10 @@ post '/callback' do
             client.reply_message(event['replyToken'], message)
 
           else
-            puts userProfile = getMemberProfile(client, userId, squadType, squadId)
-            puts userProfile = JSON.parse(userProfile.read_body)
-            puts userName = userProfile['displayName']
+            # puts userProfile = getMemberProfile(client, userId, squadType, squadId)
+            # puts userProfile = JSON.parse(userProfile.read_body)
+            # puts userName = userProfile['displayName']
+            userName = "username"
     
             if null == userName || userName == ""
               message = 
