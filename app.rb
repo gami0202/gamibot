@@ -27,10 +27,15 @@ def getSquadId(event)
   end
 end
 
+# 3桁ごとにカンマ区切り
+def delimited(num)
+  num.to_s.gsub(/(\d)(?=\d{3}+$)/, '\\1,')
+end
+
 def chargeMapToString(map)
 	string = ""
   map.each do |k, v|
-    string += "〇#{k}: #{v.to_s(:delimited)}円\n"
+    string += "〇#{k}: #{delimited(v)}円\n"
   end
 	return string
 end
@@ -40,7 +45,7 @@ def payExampleToString(map)
   map.each do |reciever, payerMap|
     string += "〇受け取り: #{reciever}\n"
     payerMap.each do |payer, value|
-      string += "  ・#{payer}: #{value.to_s(:delimited)}円\n"
+      string += "  ・#{payer}: #{delimited(value)}円\n"
     end
   end
 	return string
