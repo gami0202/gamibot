@@ -42,8 +42,15 @@ def payExampleToString(map)
 	return string
 end
 
-def getMemberProfile
-  # TODO
+def getMemberProfile client, userId, squadType, squadId
+  case squadType
+  when "group"
+    return client.get_group_member_profile(squadId, userId)
+  when "room"
+    return client.get_room_member_profile(squadId, userId)
+  when "user"
+    return client.get_profile(userId)
+  end
 end
 
 def chargeAdd(event, client)
@@ -56,7 +63,7 @@ def chargeAdd(event, client)
   userId = event['source']['userId']
   users = UserDao.new.get(getSquadId(event))
 
-  if !isAlreadyJoinUser(userId, users)
+  if !isAlreadyJoin(userId, users)
     client.reply_message(event['replyToken'], Messages.new.notJoinedUser) 
   else
     userNames = users.getNameArray
@@ -85,7 +92,9 @@ post '/callback' do
 
   events.each do |event|
     userId = event['source']['userId']
-    users = UserDao.new.get(getSquadId(event))
+    squadType = event['source']['type']
+    squadId = getSquadId(event)
+    users = UserDao.new.get(squadId)
     case event
     when Line::Bot::Event::Message
       # case event.type
@@ -161,7 +170,7 @@ post '/callback' do
           end
 
         elsif event.message["text"] == "bot list"
-          charges = ChargeDao.new.get(getSquadId(event));
+          charges = ChargeDao.new.get(squadId);
           message = {
             type: 'text',
             text: "[たてかえ一覧]\n#{charges.display}"
@@ -169,7 +178,7 @@ post '/callback' do
           client.reply_message(event['replyToken'], message)
 
         elsif event.message["text"] == 'bot calc'
-          charges = ChargeDao.new.get(getSquadId(event));
+          charges = ChargeDao.new.get(squadId);
 
           # 全員宛のみをマップに格納
           chargeMapOnlyToAll = Hash.new
@@ -256,7 +265,7 @@ post '/callback' do
           # TODO
 
         elsif event.message["text"] == 'bot join'
-          if users.isAlreadyJoinUser(userId)
+          if users.isAlreadyJoin(userId)
             userName = users.getNameById(userId)
             message = 
             {
@@ -266,7 +275,7 @@ post '/callback' do
             client.reply_message(event['replyToken'], message)
 
           else
-            userProfile = getMemberProfile(bot, userId, $squadType, $squadId);
+            userProfile = getMemberProfile(client, userId, squadType, squadId);
             userName = userProfile['displayName'];
     
             if userName == null || $userName == ""
