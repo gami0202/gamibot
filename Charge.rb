@@ -8,12 +8,8 @@ class Charge
     end
 
     def display
-        @userName + "\n"
-    end
-
-    public function display() {
         return "#{@id}, #{@owner}, #{@charge}, 全員, #{@comment}\n" if @target == "all"
         return "#{@id}, #{@owner}, #{@charge}, #{@target}, #{@comment}\n"
-    }
+    end
 
 end
