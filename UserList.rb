@@ -28,7 +28,7 @@ class UserList
     def getNameArray
         userNames = []
         @userList.each do |user|
-            userNames.push(user.name)
+            userNames.push(user.userName)
         end
         return userNames
     end
@@ -36,7 +36,7 @@ class UserList
     # userNameが見つからなかったときは、userIdをそのまま返します。
     def getNameById(userId)
         @userList.each do |user|
-            return user.name if userId == user.userId
+            return user.userName if userId == user.userId
         end
         return userId
     end
@@ -56,7 +56,7 @@ class UserList
         return "all" if userNamePart == "all"
 
         @userList.each do |user|
-            return user.name if user.name.start_with?(userNamePart)
+            return user.userName if user.userName.start_with?(userNamePart)
         end
         return nil
     end
