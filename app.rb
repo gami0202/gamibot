@@ -1,6 +1,8 @@
 require 'sinatra'   # gem 'sinatra'
 require 'line/bot'  # gem 'line-bot-api'
 require 'uri'
+require './Messages'
+require './UserDao'
 
 def client
   @client ||= Line::Bot::Client.new { |config|
@@ -9,79 +11,65 @@ def client
   }
 end
 
-def carousel
-  {
-      "type": "template",
-      "altText": "this is a carousel template",
-      "template": {
-          "type": "carousel",
-          "columns": [
-              {
-                  "title": "支払い操作",
-                  "text": "支払い操作です！",
-                  "actions": [
-                      {
-                          "type": "postback",
-                          "label": "登録",
-                          "data": "action=chargeAdd"
-                      },
-                      {
-                          "type": "postback",
-                          "label": "一覧",
-                          "data": "action=botList"
-                      },
-                      {
-                          "type": "postback",
-                          "label": "清算",
-                          "data": "action=botCalc"
-                      }
-                  ]
-              },
-              {
-                  "title": "ユーザー操作",
-                  "text": "ユーザー操作です！",
-                  "actions": [
-                      {
-                          "type": "postback",
-                          "label": "参加",
-                          "data": "action=botJoin"
-                      },
-                      {
-                          "type": "postback",
-                          "label": "一覧",
-                          "data": "action=botUserList"
-                      },
-                      {
-                          "type": "postback",
-                          "label": "ダミー",
-                          "data": "これはダミーです"
-                      }
-                  ]
-              },
-              {
-                  "title": "支払い操作(追加機能)",
-                  "text": "支払い操作(追加機能)です！",
-                  "actions": [
-                      {
-                          "type": "postback",
-                          "label": "立替された合計額",
-                          "data": "action=botSum"
-                      },
-                      {
-                          "type": "postback",
-                          "label": "! 支払い削除 !",
-                          "data": "action=chargeDelete"
-                      },
-                      {
-                          "type": "postback",
-                          "label": "ダミー",
-                          "data": "これはダミーです"
-                      }
-                  ]
-              }
-          ]
+def getSquadId(event)
+  case event.source.type
+  when "group"
+    return event.source["groupId"]
+  when "room"
+    return event.source["roomId"]
+  when "user"
+    return event.source["userId"]
+  end
+end
+
+def chargeMapToString(map)
+	string = ""
+  map.each do |k, v|
+    string += "〇#{k}: #{v.to_s(:delimited)}円\n"
+  end
+	return $string
+end
+
+def payExampleToString(map)
+	string = ""
+  map.each do |reciever, payerMap|
+    string += "〇受け取り: #{reciever}\n"
+    payerMap.each do |payer, value|
+      string += "  ・#{payer}: #{value.to_s(:delimited)}円\n"
+    end
+  end
+	return string
+end
+
+def getMemberProfile
+  # TODO
+end
+
+def chargeAdd(event, client)
+  # message = {
+  #   type: 'text',
+  #   text: event['postback']['data']
+  # }
+  # client.reply_message(event['replyToken'], message)
+
+  userId = event.source["userId"]
+  users = UserDao.new.get(getSquadId(event))
+
+  if !isAlreadyJoinUser(userId, users)
+    client.reply_message(event['replyToken'], Messages.new.notJoinedUser) 
+  else
+    userNames = users.getNameArray
+
+    if userNames.count > 29 # carousel は 3*10 までしか表示できない
+      message = {
+        type: 'text',
+        text: "以下から対象を入力してください\n全員\n#{users.display}"
       }
-  }
+      client.reply_message(event['replyToken'], message)              
+    else
+      # TODO
+    end
+  end
 end
 
 post '/callback' do
@@ -100,7 +88,7 @@ post '/callback' do
       # case event.type
       # when Line::Bot::Event::MessageType::Text
         if event.message["text"] == "あんこう"
-          client.reply_message(event['replyToken'], carousel)
+          client.reply_message(event['replyToken'], Messages.new.carousel)
           
         elsif event.message["text"] == "キャンセル"
             File.open("botStatus.txt", mode = "w"){|f|
@@ -125,11 +113,7 @@ post '/callback' do
     when Line::Bot::Event::Postback
       postback_hash = Hash[URI::decode_www_form(event['postback']['data'])]
       if postback_hash["action"] == "chargeAdd"
-        message = {
-          type: 'text',
-          text: event['postback']['data']
-        }
-        client.reply_message(event['replyToken'], message)
+        chargeAdd(event, client)
       end
     end
   end
