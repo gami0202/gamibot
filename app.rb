@@ -275,11 +275,11 @@ post '/callback' do
             client.reply_message(event['replyToken'], message)
 
           else
-            userProfile = getMemberProfile(client, userId, squadType, squadId)
-            userProfile = JSON.parse(userProfile.read_body)
-            userName = userProfile['displayName']
+            puts userProfile = getMemberProfile(client, userId, squadType, squadId)
+            puts userProfile = JSON.parse(userProfile.read_body)
+            puts userName = userProfile['displayName']
     
-            if userName == null || userName == ""
+            if null == userName || userName == ""
               message = 
               {
                   type: 'text',
