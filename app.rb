@@ -110,13 +110,13 @@ post '/callback' do
 	
         elsif event.message["text"] == "bot"
           messageText = "[Help]\n"
-          + "〇ユーザーとして参加:\n  bot join\n"
-          + "〇参加者一覧:\n  bot user list\n"
-          + "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
-          + "〇支払一覧:\n  bot list\n"
-          + "〇支払清算:\n  bot calc\n"
-          + "〇支払削除:\n  bot delete <id>\n"
-          + "〇被立替額確認:\n  bot sum"
+          messageText << "〇ユーザーとして参加:\n  bot join\n"
+          messageText << "〇参加者一覧:\n  bot user list\n"
+          messageText << "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
+          messageText << "〇支払一覧:\n  bot list\n"
+          messageText << "〇支払清算:\n  bot calc\n"
+          messageText << "〇支払削除:\n  bot delete <id>\n"
+          messageText << "〇被立替額確認:\n  bot sum"
           message = {
             type: 'text',
             text: messageText
@@ -126,11 +126,23 @@ post '/callback' do
         elsif event.message["text"].start_with?("bot add")
           req = event.message["text"].split
           if !isAlreadyJoin(userId, users)
-            client.reply_message(event['replyToken'], Messages.new.notJoinedUser)
+            message = {
+              type: 'text',
+              text: 'あなたはユーザーとして参加していません'
+            }
+            client.reply_message(event['replyToken'], message)
           elsif req.count != 5 || !req[2].integer?
-            client.reply_message(event['replyToken'], Messages.new.illegalArgument)
+            message = {
+              type: 'text',
+              text: "入力が正しくありません\n'bot'でヘルプが確認できます"
+            }
+            client.reply_message(event['replyToken'], message)
           elsif req[3] != 'all' && !users.isExistUserName(req[3]) && users.getUserNameWithForwardMatch(req[3]) == null
-            client.reply_message(event['replyToken'], Messages.new.notExistUserName(req[3], users))
+            message = {
+              type: 'text',
+              text: "指定されたユーザー #{req[3]} が存在しません\n現在の参加者は\n#{users.display}"
+            }
+            client.reply_message(event['replyToken'], message)
           else
             ownerName = users.getNameById(userId);
             value = req[2];
