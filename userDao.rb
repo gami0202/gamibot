@@ -30,7 +30,7 @@ class UserDao
         conn.exec("INSERT INTO users (user_id, user_name, squad_id) VALUES ('#{userId}', '#{userName}', '#{squadId}')")
     end
 
-    def delete squadId
+    def deleteAllBySquadId squadId
         conn = PG::Connection.new(ENV["DATABASE_URL"])
         conn.exec("DELETE FROM users WHERE squad_id='#{squadId}'")
     end

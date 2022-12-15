@@ -308,6 +308,23 @@ post '/callback' do
             end
           end
     
+        elsif event.message["text"] == 'bot user list'
+          message = {
+            type: 'text',
+            text: "[参加者一覧]\n現在の参加者は\n#{users.display}"
+          }
+          client.reply_message(event['replyToken'], message)
+
+        elsif event.message["text"] == 'bot clear'
+          ChargeDao.new.deleteAllBySquadId(squadId)
+          UserDao.new.deleteAllBySquadId(squadId)
+
+          message = {
+            type: 'text',
+            text: "記録された情報をすべて削除しました"
+          }
+          client.reply_message(event['replyToken'], message)
+
 
         end
       # end
