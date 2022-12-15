@@ -149,7 +149,7 @@ post '/callback' do
               text: "入力が正しくありません\n'bot'でヘルプが確認できます"
             }
             client.reply_message(event['replyToken'], message)
-          elsif req[3] != 'all' && !users.isExistUserName(req[3]) && users.getUserNameWithForwardMatch(req[3]) == null
+          elsif req[3] != 'all' && !users.isExistUserName(req[3]) && users.getUserNameWithForwardMatch(req[3]).nil?
             message = {
               type: 'text',
               text: "指定されたユーザー #{req[3]} が存在しません\n現在の参加者は\n#{users.display}"
@@ -275,12 +275,11 @@ post '/callback' do
             client.reply_message(event['replyToken'], message)
 
           else
-            # puts userProfile = getMemberProfile(client, userId, squadType, squadId)
-            # puts userProfile = JSON.parse(userProfile.read_body)
-            # puts userName = userProfile['displayName']
-            userName = "username"
+            puts userProfile = getMemberProfile(client, userId, squadType, squadId)
+            puts userProfile = JSON.parse(userProfile.read_body)
+            puts userName = userProfile['displayName']
     
-            if null == userName || userName == ""
+            if userName.nil? || userName.empty?
               message = 
               {
                   type: 'text',

@@ -48,7 +48,7 @@ class UserList
     end
 
     # ユーザー一覧から、ユーザー名が前方一致したものを返却。
-    # 最初にヒットしたものを返す。見つからなければnullを返す。
+    # 最初にヒットしたものを返す。見つからなければnilを返す。
     # TODO 複数ヒットしたらエラーにできるように
     def getUserNameWithForwardMatch(userNamePart)
         return "all" if userNamePart == "all"
@@ -56,7 +56,7 @@ class UserList
         @userList.each do |user|
             return user.name if user.name.start_with?(userNamePart)
         end
-        return null
+        return nil
     end
 
 end
