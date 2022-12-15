@@ -108,6 +108,131 @@ post '/callback' do
           }
           client.reply_message(event['replyToken'], message)
 	
+        elsif event.message["text"] == "bot"
+          messageText = "[Help]\n"
+          + "〇ユーザーとして参加:\n  bot join\n"
+          + "〇参加者一覧:\n  bot user list\n"
+          + "〇支払追加:\n  bot add <金額> <立替先(人名 or 'all')> <コメント>\n"
+          + "〇支払一覧:\n  bot list\n"
+          + "〇支払清算:\n  bot calc\n"
+          + "〇支払削除:\n  bot delete <id>\n"
+          + "〇被立替額確認:\n  bot sum"
+          message = {
+            type: 'text',
+            text: messageText
+          }
+          client.reply_message(event['replyToken'], message)
+
+        elsif event.message["text"].start_with?("bot add")
+          req = event.message["text"].split
+          if !isAlreadyJoin(userId, users)
+            client.reply_message(event['replyToken'], Messages.new.notJoinedUser)
+          elsif req.count != 5 || !req[2].integer?
+            client.reply_message(event['replyToken'], Messages.new.illegalArgument)
+          elsif req[3] != 'all' && !users.isExistUserName(req[3]) && users.getUserNameWithForwardMatch(req[3]) == null
+            client.reply_message(event['replyToken'], Messages.new.notExistUserName(req[3], users))
+          else
+            ownerName = users.getNameById(userId);
+            value = req[2];
+            target = users.getUserNameWithForwardMatch(req[3]);
+            comment = req[4];
+      
+            ChargeDao.new.post(ownerName, value, target, comment, squadId)
+            message = {
+              type: 'text',
+              text: "[登録完了]\n#{ownerName}さんが#{target}さんに #{value}円を立て替えました"
+            }
+            client.reply_message(event['replyToken'], message)
+          end
+
+        elsif event.message["text"] == "bot list"
+          charges = ChargeDao.new.get(getSquadId(event));
+          message = {
+            type: 'text',
+            text: "[たてかえ一覧]\n#{charges.display}"
+          }
+          client.reply_message(event['replyToken'], message)
+
+        elsif event.message["text"] == 'bot calc'
+          charges = ChargeDao.new.get(getSquadId(event));
+
+          # 全員宛のみをマップに格納
+          chargeMapOnlyToAll = Hash.new
+          charges.chargeList.each do |charge|
+            if charge.target == 'all'
+              chargeMapOnlyToAll.merge!({charge.owner => charge.charge}){|k, v1, v2| v1 + v2}
+            end
+          end
+
+          # 全員宛の一人当たり支払い額を算出
+          totalCharge = 0;
+          chargeMapOnlyToAll.each do |owner, charge|
+            totalCharge += charge
+          end
+          chargeAverage = totalCharge / users.userList.count;
+
+          # ユーザー分のマップを作成し、全員宛の一人当たり支払い額を格納
+          calcCharge = Hash.new
+          users.userList.each do |user|
+            charge = chargeAverage - chargeMapOnlyToAll[user.name]
+            calcCharge.store(user.name, charge)
+          end
+
+          # 各ユーザー宛の支払い金額を作成
+          charges.chargeList.each do |charge|
+            if charge.target != "all"
+              calcCharge[charge.owner] -= charge.charge
+              calcCharge[charge.target] += charge.charge
+            end
+          end
+
+          messageText = "[精算]\nプラスの人が支払い、マイナスの人が受け取りをして下さい\n#{chargeMapToString(calcCharge)}"
+
+          # //// 支払い例の計算 ////
+		      # プラスマイナスを分ける
+          plusValues = Hash.new
+          minusValues = Hash.new
+          calcCharge.each do |owner, value|
+            if value < 0
+              minusValues[owner] = -1 * value
+            else
+              plusValues[owner] = value;
+            end
+          end
+          
+          # 絶対値が大きい順にソート
+          plusValues = plusValues.sort_by { |_, v| v }.reverse.to_h
+          minusValues = minusValues.sort_by { |_, v| v }.reverse.to_h
+
+          # プラスの大きい人からマイナスの大きい人へ支払いをしていく
+          payExample = Hash.new
+          minusValues.each do |reciever, rvalue|
+            recieveMap = Hash.new
+            restRecieveValue = rvalue
+
+            plusValues.each do |payer, pvalue|
+              if pvalue == 0
+                next
+              elsif restRecieveValue <= pvalue # reciverの受け取り完了
+                recieveMap[payer] = restRecieveValue
+                plusValues[payer] -= restRecieveValue
+                break
+              else
+                recieveMap.store(payer, restPayValue)
+                recieveMap[payer] = pvalue
+                restRecieveValue -= pvalue
+                plusValues[payer] = 0
+              end
+            end
+            payExample[reciever] = recieveMap
+          end
+
+          messageText += "\n支払い例\n#{payExampleToString(payExample)}"
+          message = {
+            type: 'text',
+            text: messageText
+          }
+          client.reply_message(event['replyToken'], message)
         end
       # end
     when Line::Bot::Event::Postback
