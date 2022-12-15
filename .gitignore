@@ -1,3 +1,4 @@
 *.bat
 vendor/
 *.txt
+test.rb

@@ -4,7 +4,7 @@ class Charge
     def initialize(id, owner, charge, target, comment)
         @id = id
         @owner = owner
-        @charge = charge
+        @charge = charge.to_i
         @target = target
         @comment = comment
     end

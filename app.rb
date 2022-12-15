@@ -202,8 +202,11 @@ post '/callback' do
           # ユーザー分のマップを作成し、全員宛の一人当たり支払い額を格納
           calcCharge = Hash.new
           users.userList.each do |user|
-            charge = chargeAverage - chargeMapOnlyToAll[user.userName]
-            calcCharge.store(user.userName, charge)
+            if chargeMapOnlyToAll[user.userName].nil? # 全員宛の立替がない場合
+              calcCharge.store(user.userName, chargeAverage) # chargeAverage=0のはず
+            else
+              calcCharge.store(user.userName, chargeAverage - chargeMapOnlyToAll[user.userName])
+            end
           end
 
           # 各ユーザー宛の支払い金額を作成
