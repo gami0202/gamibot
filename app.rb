@@ -276,6 +276,7 @@ post '/callback' do
 
           else
             userProfile = getMemberProfile(client, userId, squadType, squadId)
+            userProfile = JSON.parse(userProfile.read_body)
             userName = userProfile['displayName']
     
             if userName == null || userName == ""
