@@ -1,6 +1,6 @@
 require 'pg'
-require './Charge'
-require './ChargeList'
+require_relative './Charge'
+require_relative './ChargeList'
 
 def get squadId
     chargeList = []

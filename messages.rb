@@ -1,4 +1,4 @@
-require './UserList'
+require_relative './UserList'
 
 class Messages
     def carousel

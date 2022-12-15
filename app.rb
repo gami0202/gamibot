@@ -1,8 +1,8 @@
 require 'sinatra'   # gem 'sinatra'
 require 'line/bot'  # gem 'line-bot-api'
 require 'uri'
-require './Messages'
-require './UserDao'
+require_relative './Messages'
+require_relative './UserDao'
 
 def client
   @client ||= Line::Bot::Client.new { |config|

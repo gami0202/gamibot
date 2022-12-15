@@ -1,4 +1,4 @@
-require './Charge'
+require_relative './Charge'
 
 class ChargeList
     def initialize(chargeList)

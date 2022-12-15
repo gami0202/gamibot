@@ -1,6 +1,6 @@
 require 'pg'
-require './User'
-require './UserList'
+require_relative './User'
+require_relative './UserList'
 
 class UserDao
     def get_all

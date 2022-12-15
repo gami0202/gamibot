@@ -1,4 +1,4 @@
-require './User'
+require_relative './User'
 
 class UserList
     def initialize(userList)
