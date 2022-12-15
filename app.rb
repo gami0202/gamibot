@@ -3,6 +3,7 @@ require 'line/bot'  # gem 'line-bot-api'
 require 'uri'
 require_relative './Messages'
 require_relative './UserDao'
+require_relative './ChargeDao'
 
 def client
   @client ||= Line::Bot::Client.new { |config|
@@ -83,6 +84,8 @@ post '/callback' do
   events = client.parse_events_from(body)
 
   events.each do |event|
+    userId = event.source["userId"]
+    users = UserDao.new.get(getSquadId(event))
     case event
     when Line::Bot::Event::Message
       # case event.type
