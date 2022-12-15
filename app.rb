@@ -156,10 +156,10 @@ post '/callback' do
             }
             client.reply_message(event['replyToken'], message)
           else
-            ownerName = users.getNameById(userId);
-            value = req[2];
-            target = users.getUserNameWithForwardMatch(req[3]);
-            comment = req[4];
+            ownerName = users.getNameById(userId)
+            value = req[2]
+            target = users.getUserNameWithForwardMatch(req[3])
+            comment = req[4]
       
             ChargeDao.new.post(ownerName, value, target, comment, squadId)
             message = {
@@ -170,7 +170,7 @@ post '/callback' do
           end
 
         elsif event.message["text"] == "bot list"
-          charges = ChargeDao.new.get(squadId);
+          charges = ChargeDao.new.get(squadId)
           message = {
             type: 'text',
             text: "[たてかえ一覧]\n#{charges.display}"
@@ -178,7 +178,7 @@ post '/callback' do
           client.reply_message(event['replyToken'], message)
 
         elsif event.message["text"] == 'bot calc'
-          charges = ChargeDao.new.get(squadId);
+          charges = ChargeDao.new.get(squadId)
 
           # 全員宛のみをマップに格納
           chargeMapOnlyToAll = Hash.new
@@ -189,11 +189,11 @@ post '/callback' do
           end
 
           # 全員宛の一人当たり支払い額を算出
-          totalCharge = 0;
+          totalCharge = 0
           chargeMapOnlyToAll.each do |owner, charge|
             totalCharge += charge
           end
-          chargeAverage = totalCharge / users.userList.count;
+          chargeAverage = totalCharge / users.userList.count
 
           # ユーザー分のマップを作成し、全員宛の一人当たり支払い額を格納
           calcCharge = Hash.new
@@ -220,7 +220,7 @@ post '/callback' do
             if value < 0
               minusValues[owner] = -1 * value
             else
-              plusValues[owner] = value;
+              plusValues[owner] = value
             end
           end
           
@@ -275,8 +275,8 @@ post '/callback' do
             client.reply_message(event['replyToken'], message)
 
           else
-            userProfile = getMemberProfile(client, userId, squadType, squadId);
-            userName = userProfile['displayName'];
+            userProfile = getMemberProfile(client, userId, squadType, squadId)
+            userName = userProfile['displayName']
     
             if userName == null || userName == ""
               message = 
