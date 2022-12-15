@@ -13,13 +13,13 @@ def client
 end
 
 def getSquadId(event)
-  case event.source.type
+  case event["source"].type
   when "group"
-    return event.source["groupId"]
+    return event["source"]["groupId"]
   when "room"
-    return event.source["roomId"]
+    return event["source"]["roomId"]
   when "user"
-    return event.source["userId"]
+    return event["source"]["userId"]
   end
 end
 
@@ -53,7 +53,7 @@ def chargeAdd(event, client)
   # }
   # client.reply_message(event['replyToken'], message)
 
-  userId = event.source["userId"]
+  userId = event["source"]["userId"]
   users = UserDao.new.get(getSquadId(event))
 
   if !isAlreadyJoinUser(userId, users)
@@ -84,7 +84,7 @@ post '/callback' do
   events = client.parse_events_from(body)
 
   events.each do |event|
-    userId = event.source["userId"]
+    userId = event["source"]["userId"]
     users = UserDao.new.get(getSquadId(event))
     case event
     when Line::Bot::Event::Message
