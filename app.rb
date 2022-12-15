@@ -12,6 +12,10 @@ def client
   }
 end
 
+def is_numeric?(text)
+  true if Float(text) rescue false
+end
+
 def getSquadId(event)
   case event['source']['type']
   when "group"
@@ -143,7 +147,7 @@ post '/callback' do
               text: 'あなたはユーザーとして参加していません'
             }
             client.reply_message(event['replyToken'], message)
-          elsif req.count != 5 || !req[2].integer?
+          elsif req.count != 5 || !is_numeric?(req[2])
             message = {
               type: 'text',
               text: "入力が正しくありません\n'bot'でヘルプが確認できます"

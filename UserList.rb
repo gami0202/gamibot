@@ -36,7 +36,7 @@ class UserList
     # userNameが見つからなかったときは、userIdをそのまま返します。
     def getNameById(userId)
         @userList.each do |user|
-            return user.name if userId == user.id
+            return user.name if userId == user.userId
         end
         return userId
     end
