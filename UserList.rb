@@ -40,11 +40,11 @@ class UserList
     end
 
     def isAlreadyJoin(userId)
-        return getIdArray().include?($userId)
+        return getIdArray().include?(userId)
     end
 
     def isExistUserName(userName)
-        return getNameArray().include?($userName)
+        return getNameArray().include?(userName)
     end
 
     # ユーザー一覧から、ユーザー名が前方一致したものを返却。

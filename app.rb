@@ -28,7 +28,7 @@ def chargeMapToString(map)
   map.each do |k, v|
     string += "〇#{k}: #{v.to_s(:delimited)}円\n"
   end
-	return $string
+	return string
 end
 
 def payExampleToString(map)
@@ -278,7 +278,7 @@ post '/callback' do
             userProfile = getMemberProfile(client, userId, squadType, squadId);
             userName = userProfile['displayName'];
     
-            if userName == null || $userName == ""
+            if userName == null || userName == ""
               message = 
               {
                   type: 'text',
@@ -287,12 +287,12 @@ post '/callback' do
               client.reply_message(event['replyToken'], message)
     
             else
-              $userDao = UserDao,new.post(userId, userName, squadId)
+              userDao = UserDao,new.post(userId, userName, squadId)
               users = UserDao.new.get(squadId) # post後のものを再取得
               message = 
               {
                   type: 'text',
-                  text: "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{$users.display}"
+                  text: "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{users.display}"
               }
               client.reply_message(event['replyToken'], message)
             end
