@@ -267,8 +267,7 @@ post '/callback' do
         elsif event.message["text"] == 'bot join'
           if users.isAlreadyJoin(userId)
             userName = users.getNameById(userId)
-            message = 
-            {
+            message = {
                 type: 'text',
                 text: "あなたはすでに #{userName} として参加しています"
             }
@@ -280,18 +279,16 @@ post '/callback' do
             puts userName = userProfile['displayName']
     
             if userName.nil? || userName.empty?
-              message = 
-              {
+              message = {
                   type: 'text',
                   text: "ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>"
               }
               client.reply_message(event['replyToken'], message)
     
             else
-              userDao = UserDao,new.post(userId, userName, squadId)
+              userDao = UserDao.new.post(userId, userName, squadId)
               users = UserDao.new.get(squadId) # post後のものを再取得
-              message = 
-              {
+              message = {
                   type: 'text',
                   text: "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{users.display}"
               }
