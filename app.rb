@@ -344,8 +344,23 @@ post '/callback' do
           }
           client.reply_message(event['replyToken'], message)
 
+        # グループ/ルームに記録された情報をすべて削除して、退出する
         elsif event.message["text"] == 'bot leave'
-          # TODO
+          ChargeDao.new.deleteAllBySquadId(squadId)
+          UserDao.new.deleteAllBySquadId(squadId)
+
+          case squadType
+          when "group"
+            client.leave_group(squadId)
+          when "room"
+            client.leave_room(squadId)
+          when "user"
+            message = {
+              type: 'text',
+              text: "退出はグループ/ルームのみ可能です。"
+            }
+            client.reply_message(event['replyToken'], message)
+          end
 
         elsif event.message["text"] == 'bot clear'
           ChargeDao.new.deleteAllBySquadId(squadId)
