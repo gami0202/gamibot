@@ -17,6 +17,14 @@ def client
   }
 end
 
+def reply_text(event, client, text)
+  message = {
+    type: 'text',
+    text: text
+  }
+  client.reply_message(event['replyToken'], message)
+end
+
 def is_numeric?(text)
   true if Float(text) rescue false
 end
@@ -29,6 +37,21 @@ def getSquadId(event)
     return event['source']['roomId']
   when "user"
     return event['source']['userId']
+  end
+end
+
+def getSquadUserIds(event, client, squadId)
+  case event['source']['type']
+  when "group"
+    # 最大100人まで取得可能。それ以降も取得可能だが未実装。
+    # see https://developers.line.biz/ja/reference/messaging-api/#get-group-member-user-ids-response 
+    response = client.get_group_member_ids(squadId)
+    result = JSON.parse(response.body)
+    return result['memberIds']
+  when "room"
+    response = client.get_room_member_ids(squadId)
+    result = JSON.parse(response.body)
+    return result['memberIds']
   end
 end
 
@@ -338,9 +361,9 @@ post '/callback' do
             client.reply_message(event['replyToken'], message)
 
           else
-            puts userProfile = getMemberProfile(client, userId, squadType, squadId)
-            puts userProfile = JSON.parse(userProfile.read_body)
-            puts userName = userProfile['displayName']
+            userProfile = getMemberProfile(client, userId, squadType, squadId)
+            userProfile = JSON.parse(userProfile.read_body)
+            userName = userProfile['displayName']
     
             if userName.nil? || userName.empty?
               message = {
@@ -359,7 +382,32 @@ post '/callback' do
               client.reply_message(event['replyToken'], message)
             end
           end
-    
+
+        elsif event.message["text"] == 'bot join all'
+          if event['source']['type'] == "user"
+            reply_text(event, client, "このコマンドはグループ/ルームのみ可能です。")
+          else
+            squadUserIds = getSquadUserIds(event, client, squadId)
+            
+            squadUserIds.each do |userId|
+              next if users.isAlreadyJoin(userId)
+
+              userProfile = getMemberProfile(client, userId, squadType, squadId)
+              userProfile = JSON.parse(userProfile.read_body)
+              userName = userProfile['displayName']
+      
+              if userName.nil? || userName.empty?
+                reply_text(event, client, "ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>")
+                break
+              else
+                userDao = UserDao.new.post(userId, userName, squadId)
+              end
+            end
+
+            users = UserDao.new.get(squadId) # post後のものを再取得
+            reply_text(event, client, "[ユーザ参加]\nグループ/ルームメンバーが参加しました\n現在の参加者は\n#{users.display}")
+
+          end
         elsif event.message["text"] == 'bot user list'
           message = {
             type: 'text',
