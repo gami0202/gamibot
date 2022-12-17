@@ -303,7 +303,30 @@ post '/callback' do
           client.reply_message(event['replyToken'], message)
 
         elsif event.message["text"].start_with?("bot delete")
-          # TODO
+          req = event.message["text"].split
+          if req.count != 3 || !is_numeric?(req[2])
+            message = {
+              type: 'text',
+              text: "入力が正しくありません\n'bot'でヘルプが確認できます"
+            }
+            client.reply_message(event['replyToken'], message)
+          else
+            id = req[2]
+            if ChargeDao.new.getById(id, squadId).nil?
+              message = {
+                type: 'text',
+                text: "#{id}は削除できません"
+              }
+              client.reply_message(event['replyToken'], message)
+            else
+              chargeDao = ChargeDao.new.delete(id, squadId);
+              message = {
+                type: 'text',
+                text: "#{id}を削除しました"
+              }
+              client.reply_message(event['replyToken'], message)
+            end
+          end
 
         elsif event.message["text"] == 'bot join'
           if users.isAlreadyJoin(userId)

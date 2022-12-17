@@ -14,6 +14,16 @@ class ChargeDao
         return ChargeList.new(chargeList)
     end
 
+    def getById id, squadId
+        conn = PG::Connection.new(ENV["DATABASE_URL"])
+        conn.exec("SELECT * FROM charges WHERE id='#{id}' AND squad_id='#{squadId}'") do |result|
+            result.each do |row|
+                return Charge.new(row["id"], row["owner"], row["value"], row["target"], row["comment"])
+            end
+        end
+        return nil
+    end
+
     def post owner, value, target, comment, squadId
         conn = PG::Connection.new(ENV["DATABASE_URL"])
         conn.exec("INSERT INTO charges (owner, value, target, comment, squad_id) VALUES ('#{owner}', '#{value}', '#{target}', '#{comment}', '#{squadId}')")
