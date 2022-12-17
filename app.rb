@@ -5,6 +5,11 @@ require_relative './Messages'
 require_relative './UserDao'
 require_relative './ChargeDao'
 
+# for monitoring
+get '/' do
+  'Hello world!'
+end
+
 def client
   @client ||= Line::Bot::Client.new { |config|
     config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
