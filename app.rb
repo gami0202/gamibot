@@ -276,7 +276,31 @@ post '/callback' do
           client.reply_message(event['replyToken'], message)
         
         elsif event.message["text"] == 'bot sum'
-          # TODO
+          charges = ChargeDao.new.get(squadId)
+
+          # 全員宛の一人当たり支払い額を算出
+          totalCharge = 0;
+          charges.chargeList.each do |charge|
+            totalCharge += charge.charge if charge.target == "all"
+          end
+          chargeAverage = totalCharge / users.userList.count
+
+          # ユーザー分のマップを作成し、全員宛の一人当たり支払い額を格納
+          calcCharge = Hash.new
+          users.userList.each do |user|
+            calcCharge.store(user.userName, chargeAverage)
+          end
+
+          # 各ユーザー宛の支払い額を加算
+          charges.chargeList.each do |charge|
+            calcCharge.merge!({charge.target => charge.charge}){|k, v1, v2| v1 + v2} if charge.target != "all"
+          end
+
+          message = {
+            type: 'text',
+            text: "[立替された合計額]\n#{chargeMapToString(calcCharge)}"
+          }
+          client.reply_message(event['replyToken'], message)
 
         elsif event.message["text"].start_with?("bot delete")
           # TODO
@@ -319,6 +343,9 @@ post '/callback' do
             text: "[参加者一覧]\n現在の参加者は\n#{users.display}"
           }
           client.reply_message(event['replyToken'], message)
+
+        elsif event.message["text"] == 'bot leave'
+          # TODO
 
         elsif event.message["text"] == 'bot clear'
           ChargeDao.new.deleteAllBySquadId(squadId)
