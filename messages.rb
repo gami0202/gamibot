@@ -2,7 +2,7 @@ require_relative './UserList'
 
 class Messages
     def carousel
-        {
+        message = {
             "type": "template",
             "altText": "this is a carousel template",
             "template": {
@@ -75,6 +75,7 @@ class Messages
                 ]
             }
         }
+        return message
     end
 
     def illegalArgument
