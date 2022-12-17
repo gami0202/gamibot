@@ -43,6 +43,7 @@ end
 def getSquadUserIds(event, client, squadId)
   case event['source']['type']
   when "group"
+    # line認証済みアカウントまたはプレミアムアカウントのみで利用可能
     # 最大100人まで取得可能。それ以降も取得可能だが未実装。
     # see https://developers.line.biz/ja/reference/messaging-api/#get-group-member-user-ids-response 
     response = client.get_group_member_ids(squadId)
@@ -303,17 +304,12 @@ post '/callback' do
             userProfile = getMemberProfile(client, userId, squadType, squadId)
             userProfile = JSON.parse(userProfile.read_body)
             userName = userProfile['displayName']
-    
-            if userName.nil? || userName.empty?
-              reply_text(event, client, "ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>")
-    
-            else
-              userDao = UserDao.new.post(userId, userName, squadId)
-              users = UserDao.new.get(squadId) # post後のものを再取得
-              reply_text(event, client, "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{users.display}")
-            end
+            UserDao.new.post(userId, userName, squadId)
+            users = UserDao.new.get(squadId) # post後のものを再取得
+            reply_text(event, client, "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{users.display}")
           end
 
+        # line認証済みアカウントまたはプレミアムアカウントのみで利用可能
         elsif event.message["text"] == 'bot join all'
           if event['source']['type'] == "user"
             reply_text(event, client, "このコマンドはグループ/ルームのみ可能です。")
@@ -326,13 +322,7 @@ post '/callback' do
               userProfile = getMemberProfile(client, userId, squadType, squadId)
               userProfile = JSON.parse(userProfile.read_body)
               userName = userProfile['displayName']
-      
-              if userName.nil? || userName.empty?
-                reply_text(event, client, "ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>")
-                break
-              else
-                userDao = UserDao.new.post(userId, userName, squadId)
-              end
+              userDao = UserDao.new.post(userId, userName, squadId)
             end
 
             users = UserDao.new.get(squadId) # post後のものを再取得
