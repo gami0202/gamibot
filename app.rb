@@ -101,16 +101,12 @@ def chargeAdd(event, client)
   users = UserDao.new.get(getSquadId(event))
 
   if !users.isAlreadyJoin(userId)
-    client.reply_message(event['replyToken'], Messages.new.notJoinedUser) 
+    reply_text(event, client, 'あなたはユーザーとして参加していません')
   else
     userNames = users.getNameArray
 
     if userNames.count > 29 # carousel は 3*10 までしか表示できない
-      message = {
-        type: 'text',
-        text: "以下から対象を入力してください\n全員\n#{users.display}"
-      }
-      client.reply_message(event['replyToken'], message)              
+      reply_text(event, client, "以下から対象を入力してください\n全員\n#{users.display}")        
     else
       # TODO
     end
@@ -143,19 +139,10 @@ post '/callback' do
             File.open("botStatus.txt", mode = "w"){|f|
               f.write("")
             }
-
-            message = {
-              type: 'text',
-              text: "現在の処理をキャンセルしました"
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, "現在の処理をキャンセルしました")
 
         elsif event.message["text"] == "ヘルプ"
-          message = {
-            type: 'text',
-            text: "[ヘルプ]\n https://github.com/gami0202/gamibot/blob/master/README.md"
-          }
-          client.reply_message(event['replyToken'], message)
+          reply_text(event, client, "[ヘルプ]\n https://github.com/gami0202/gamibot/blob/master/README.md")
 	
         elsif event.message["text"] == "bot"
           messageText = "[Help]\n"
@@ -166,32 +153,16 @@ post '/callback' do
           messageText << "〇支払清算:\n  bot calc\n"
           messageText << "〇支払削除:\n  bot delete <id>\n"
           messageText << "〇被立替額確認:\n  bot sum"
-          message = {
-            type: 'text',
-            text: messageText
-          }
-          client.reply_message(event['replyToken'], message)
+          reply_text(event, client, messageText)
 
         elsif event.message["text"].start_with?("bot add")
           req = event.message["text"].split
           if !users.isAlreadyJoin(userId)
-            message = {
-              type: 'text',
-              text: 'あなたはユーザーとして参加していません'
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, 'あなたはユーザーとして参加していません')
           elsif req.count != 5 || !is_numeric?(req[2])
-            message = {
-              type: 'text',
-              text: "入力が正しくありません\n'bot'でヘルプが確認できます"
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, "入力が正しくありません\n'bot'でヘルプが確認できます")
           elsif req[3] != 'all' && !users.isExistUserName(req[3]) && users.getUserNameWithForwardMatch(req[3]).nil?
-            message = {
-              type: 'text',
-              text: "指定されたユーザー #{req[3]} が存在しません\n現在の参加者は\n#{users.display}"
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, "指定されたユーザー #{req[3]} が存在しません\n現在の参加者は\n#{users.display}")
           else
             ownerName = users.getNameById(userId)
             value = req[2]
@@ -199,20 +170,12 @@ post '/callback' do
             comment = req[4]
       
             ChargeDao.new.post(ownerName, value, target, comment, squadId)
-            message = {
-              type: 'text',
-              text: "[登録完了]\n#{ownerName}さんが#{target}さんに #{value}円を立て替えました"
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, "[登録完了]\n#{ownerName}さんが#{target}さんに #{value}円を立て替えました")
           end
 
         elsif event.message["text"] == "bot list"
           charges = ChargeDao.new.get(squadId)
-          message = {
-            type: 'text',
-            text: "[たてかえ一覧]\n#{charges.display}"
-          }
-          client.reply_message(event['replyToken'], message)
+          reply_text(event, client, "[たてかえ一覧]\n#{charges.display}")
 
         elsif event.message["text"] == 'bot calc'
           charges = ChargeDao.new.get(squadId)
@@ -292,11 +255,7 @@ post '/callback' do
           end
 
           messageText += "\n支払い例\n#{payExampleToString(payExample)}"
-          message = {
-            type: 'text',
-            text: messageText
-          }
-          client.reply_message(event['replyToken'], message)
+          reply_text(event, client, messageText)
         
         elsif event.message["text"] == 'bot sum'
           charges = ChargeDao.new.get(squadId)
@@ -319,46 +278,26 @@ post '/callback' do
             calcCharge.merge!({charge.target => charge.charge}){|k, v1, v2| v1 + v2} if charge.target != "all"
           end
 
-          message = {
-            type: 'text',
-            text: "[立替された合計額]\n#{chargeMapToString(calcCharge)}"
-          }
-          client.reply_message(event['replyToken'], message)
+          reply_text(event, client, "[立替された合計額]\n#{chargeMapToString(calcCharge)}")
 
         elsif event.message["text"].start_with?("bot delete")
           req = event.message["text"].split
           if req.count != 3 || !is_numeric?(req[2])
-            message = {
-              type: 'text',
-              text: "入力が正しくありません\n'bot'でヘルプが確認できます"
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, "入力が正しくありません\n'bot'でヘルプが確認できます")
           else
             id = req[2]
             if ChargeDao.new.getById(id, squadId).nil?
-              message = {
-                type: 'text',
-                text: "#{id}は削除できません"
-              }
-              client.reply_message(event['replyToken'], message)
+              reply_text(event, client, "#{id}は削除できません")
             else
               chargeDao = ChargeDao.new.delete(id, squadId);
-              message = {
-                type: 'text',
-                text: "#{id}を削除しました"
-              }
-              client.reply_message(event['replyToken'], message)
+              reply_text(event, client, "#{id}を削除しました")
             end
           end
 
         elsif event.message["text"] == 'bot join'
           if users.isAlreadyJoin(userId)
             userName = users.getNameById(userId)
-            message = {
-                type: 'text',
-                text: "あなたはすでに #{userName} として参加しています"
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, "あなたはすでに #{userName} として参加しています")
 
           else
             userProfile = getMemberProfile(client, userId, squadType, squadId)
@@ -366,20 +305,12 @@ post '/callback' do
             userName = userProfile['displayName']
     
             if userName.nil? || userName.empty?
-              message = {
-                  type: 'text',
-                  text: "ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>"
-              }
-              client.reply_message(event['replyToken'], message)
+              reply_text(event, client, "ライン名が取得できません。\nボットを友達に追加するか、次のコマンドで参加してください\nbot join <名前>")
     
             else
               userDao = UserDao.new.post(userId, userName, squadId)
               users = UserDao.new.get(squadId) # post後のものを再取得
-              message = {
-                  type: 'text',
-                  text: "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{users.display}"
-              }
-              client.reply_message(event['replyToken'], message)
+              reply_text(event, client, "[ユーザ参加]\n #{userName} が参加しました\n現在の参加者は\n#{users.display}")
             end
           end
 
@@ -409,11 +340,7 @@ post '/callback' do
 
           end
         elsif event.message["text"] == 'bot user list'
-          message = {
-            type: 'text',
-            text: "[参加者一覧]\n現在の参加者は\n#{users.display}"
-          }
-          client.reply_message(event['replyToken'], message)
+          reply_text(event, client, "[参加者一覧]\n現在の参加者は\n#{users.display}")
 
         # グループ/ルームに記録された情報をすべて削除して、退出する
         elsif event.message["text"] == 'bot leave'
@@ -426,22 +353,13 @@ post '/callback' do
           when "room"
             client.leave_room(squadId)
           when "user"
-            message = {
-              type: 'text',
-              text: "退出はグループ/ルームのみ可能です。"
-            }
-            client.reply_message(event['replyToken'], message)
+            reply_text(event, client, "退出はグループ/ルームのみ可能です。")
           end
 
         elsif event.message["text"] == 'bot clear'
           ChargeDao.new.deleteAllBySquadId(squadId)
           UserDao.new.deleteAllBySquadId(squadId)
-
-          message = {
-            type: 'text',
-            text: "記録された情報をすべて削除しました"
-          }
-          client.reply_message(event['replyToken'], message)
+          reply_text(event, client, "記録された情報をすべて削除しました")
 
 
         end
