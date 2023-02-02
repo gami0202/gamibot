@@ -26,3 +26,28 @@ see: https://github.com/kenakamu/LINESimulator/blob/master/README_ja.md
 npm install -g line-simulator
 line-simulator
 ```
+
+## DB再構築方法
+
+### render上の操作
+
+1. render上でDB作成  
+作成後、"External Database URL" をメモする。
+
+2. renderのWebサービス側で、[Environment] -> [DATABASE_URL] に、"External Database URL"を貼り付けて更新
+
+### ローカルマシン上の操作
+
+1. TablePlus を開く
+
+2. 右クリック -> [New] -> [Import from URL] に、"External Database URL" を貼り付けてDB接続
+
+3. [Ctrl + e] でクエリエディターを開く
+
+4. dbフォルダの内容を貼り付け -> [Run Current]
+
+### 動作確認
+
+1. TablePlus を閉じる（無料版だとセッション数の問題で、renderアプリがDB接続エラー発生する）
+
+2. line で bot を使って、応答が返ってくる
