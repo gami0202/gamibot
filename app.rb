@@ -246,7 +246,7 @@ post '/callback' do
                 plusValues[payer] -= restRecieveValue
                 break
               else
-                recieveMap.store(payer, restPayValue)
+                # recieveMap.store(payer, restPayValue)
                 recieveMap[payer] = pvalue
                 restRecieveValue -= pvalue
                 plusValues[payer] = 0
