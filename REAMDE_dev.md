@@ -29,12 +29,22 @@ line-simulator
 
 ## DB再構築方法
 
+### 現状のデータをExport（ローカルマシン上の操作）
+
+参考) https://docs.tableplus.com/gui-tools/import-and-export
+
+1. TablePlus を開く
+
+2. 各テーブルを右クリック -> [Export] -> [CSV]タブを選択 -> [Export]
+
 ### render上の操作
 
-1. render上でDB作成  
+1. render上で既存のDBを削除(1つまでしか無料DB作成できない)
+
+2. render上でDB(PostgreSQL)作成  
 作成後、"External Database URL" をメモする。
 
-2. renderのWebサービス側で、[Environment] -> [DATABASE_URL] に、"External Database URL"を貼り付けて更新
+3. renderのWebサービス側で、[Environment] -> [DATABASE_URL] に、"External Database URL"を貼り付けて更新
 
 ### ローカルマシン上の操作
 
@@ -42,9 +52,18 @@ line-simulator
 
 2. 右クリック -> [New] -> [Import from URL] に、"External Database URL" を貼り付けてDB接続
 
+3. 左サイドバーの [Tables] あたりを右クリック -> [Import] -> [From CSV...] -> Exportしてあったcsvファイルを選択 -> [Import] -> [Create new table] にチェックを入れる -> [Import]  
+※テーブルの数だけ実施
+
+<!-- ### ローカルマシン上の操作(新規テーブルを作成する場合)
+
+1. TablePlus を開く
+
+2. 右クリック -> [New] -> [Import from URL] に、"External Database URL" を貼り付けてDB接続
+
 3. [Ctrl + e] でクエリエディターを開く
 
-4. dbフォルダの内容を貼り付け -> [Run Current]
+4. dbフォルダの内容を貼り付け -> [Run Current] -->
 
 ### 動作確認
 
